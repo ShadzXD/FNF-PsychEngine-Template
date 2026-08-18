@@ -41,6 +41,7 @@ class DialogueBox extends FlxSpriteGroup {
 		}, 5);
 
 		box = new FlxSprite(-20, 45);
+		box.antialiasing = false;
 
 		var hasDialog = true;
 		switch (songName) {
@@ -58,6 +59,7 @@ class DialogueBox extends FlxSpriteGroup {
 				box.animation.addByIndices('normal', 'Spirit Textbox spawn instance 1', [11], '', 24);
 
 				var face:FlxSprite = new FlxSprite(320, 170).loadGraphic(Paths.image('weeb/spiritFaceForward'));
+				face.antialiasing = false;
 				face.setGraphicSize(Std.int(face.width * 6));
 				add(face);
 			default:
@@ -76,6 +78,7 @@ class DialogueBox extends FlxSpriteGroup {
 		}
 
 		portraitLeft = new FlxSprite(-20, 40);
+		portraitLeft.antialiasing = false;
 		portraitLeft.frames = Paths.getSparrowAtlas('weeb/senpaiPortrait');
 		portraitLeft.animation.addByPrefix('enter', 'Senpai Portrait Enter', 24, false);
 		portraitLeft.setGraphicSize(Std.int(portraitLeft.width * PlayState.daPixelZoom * 0.9));
@@ -85,6 +88,7 @@ class DialogueBox extends FlxSpriteGroup {
 		portraitLeft.visible = false;
 
 		portraitRight = new FlxSprite(0, 40);
+		portraitRight.antialiasing = false;
 		portraitRight.frames = Paths.getSparrowAtlas('weeb/bfPortrait');
 		portraitRight.animation.addByPrefix('enter', 'Boyfriend portrait enter', 24, false);
 		portraitRight.setGraphicSize(Std.int(portraitRight.width * PlayState.daPixelZoom * 0.9));
@@ -102,6 +106,7 @@ class DialogueBox extends FlxSpriteGroup {
 		portraitLeft.screenCenter(X);
 
 		handSelect = new FlxSprite(1042, 590).loadGraphic(Paths.image('weeb/pixelUI/hand_textbox'));
+		handSelect.antialiasing = false;
 		handSelect.setGraphicSize(Std.int(handSelect.width * PlayState.daPixelZoom * 0.9));
 		handSelect.updateHitbox();
 		handSelect.visible = false;
