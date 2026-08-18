@@ -18,9 +18,7 @@ import objects.Note;
 import objects.NoteSplash;
 #if HSCRIPT_ALLOWED
 import psychlua.HScript;
-import crowplexus.iris.Iris;
-import crowplexus.hscript.Expr.Error as IrisError;
-import crowplexus.hscript.Printer;
+import psychlua.HScript.HScriptError;
 #end
 
 #if cpp
@@ -118,10 +116,10 @@ class LoadingState extends MusicBeatState {
 					} else {
 						trace('"$scriptPath" contains no \"onCreate" function, stopping script.');
 					}
-				} catch (e:IrisError) {
+				} catch (e:HScriptError) {
 					var pos:HScriptInfos = cast {fileName: scriptPath, showLine: false};
-					Iris.error(Printer.errorToString(e, false), pos);
-					var hscript:HScript = cast(Iris.instances.get(scriptPath), HScript);
+					HScript.error(HScript.describe(e), pos);
+					var hscript:HScript = HScript.instances.get(scriptPath);
 				}
 				if (hscript != null)
 					hscript.destroy();

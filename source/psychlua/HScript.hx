@@ -8,11 +8,12 @@ import psychlua.CustomSubstate;
 import psychlua.FunkinLua;
 #end
 #if HSCRIPT_ALLOWED
-import crowplexus.iris.Iris;
-import crowplexus.iris.IrisConfig;
-import crowplexus.hscript.Expr.Error as IrisError;
-import crowplexus.hscript.Printer;
-import haxe.ValueException;
+import hxscript.Config as HxScriptConfig;
+import hxscript.Script as HxScript;
+import hxscript.error.Diagnostic;
+import hxscript.error.Printer as HxScriptPrinter;
+import hxscript.error.Sink;
+import hxscript.runtime.Interp;
 
 typedef HScriptInfos = {
 	> haxe.PosInfos,
@@ -23,10 +24,106 @@ typedef HScriptInfos = {
 	#end
 }
 
-class HScript extends Iris {
+typedef HScriptError = haxe.Exception;
+
+typedef HScriptCall = {
+	var funName:String;
+	var signature:Dynamic;
+	var returnValue:Dynamic;
+}
+
+enum abstract HScriptLogLevel(String) from String to String {
+	var WARN = 'WARNING';
+	var ERROR = 'ERROR';
+	var FATAL = 'FATAL';
+}
+
+class PsychScript extends HxScript {
+	public function new(scriptCode:String, scriptName:String) {
+		super(scriptCode, scriptName);
+	}
+
+	override public function setDefaults():Void {
+		interp.setDefaults(false);
+	}
+}
+
+class HScript {
+	public static var instances:Map<String, HScript> = new Map();
+
+	public static var typedMode(get, set):Bool;
+
+	static function get_typedMode():Bool
+		return HxScriptConfig.typedMode;
+
+	static function set_typedMode(v:Bool):Bool
+		return HxScriptConfig.typedMode = v;
+
+	public static function logLevel(level:HScriptLogLevel, x:String, ?pos:haxe.PosInfos):Void
+		haxe.Log.trace('[$level] $x', pos);
+
+	public static var warn:(String, ?haxe.PosInfos) -> Void = (x, ?pos) -> logLevel(WARN, x, pos);
+	public static var error:(String, ?haxe.PosInfos) -> Void = (x, ?pos) -> logLevel(ERROR, x, pos);
+	public static var fatal:(String, ?haxe.PosInfos) -> Void = (x, ?pos) -> logLevel(FATAL, x, pos);
+
+	/** The newest diagnostic hxScript produced; it carries more than the exception's message. */
+	public static var lastDiagnostic:Diagnostic = null;
+
+	static var watchingDiagnostics:Bool = false;
+
+	/**
+	 * Keeps the newest diagnostic so a caught exception can be reported with the source line, the
+	 * caret under it and the script call stack. Pushed onto `Sink.onDiagnostic` rather than
+	 * registered through `Sink.listen`, because `listen` would stop hxScript printing them too.
+	 */
+	static function watchDiagnostics():Void {
+		if (watchingDiagnostics)
+			return;
+
+		watchingDiagnostics = true;
+		Sink.onDiagnostic.push(function(d:Diagnostic) lastDiagnostic = d);
+	}
+
+	/**
+	 * Renders everything hxScript knows about `e`: where it happened, the offending source line with
+	 * a caret under the column, any hint, and the call stack across scripts and back into the engine.
+	 *
+	 * @param e What was caught.
+	 * @param context What was being done, prefixed to the message.
+	 */
+	public static function describe(e:haxe.Exception, ?context:String):String
+		return HxScriptPrinter.render(Sink.fromException(e, PRun, context));
+
+	/**
+	 * Renders the newest diagnostic, for a failure that reported one without throwing anything
+	 * useful (a parse error leaves `program` null and the reason only in the diagnostic).
+	 *
+	 * @param fallback Used when nothing was reported.
+	 */
+	public static function describeLast(fallback:String):String
+		return lastDiagnostic != null ? HxScriptPrinter.render(lastDiagnostic) : fallback;
+
+	public static function destroyAll():Void {
+		for (script in [for (one in instances) one])
+			script.destroy();
+		instances.clear();
+	}
+
+	var script:PsychScript;
+
+	public var scriptCode:String;
 	public var filePath:String;
 	public var modFolder:String;
 	public var returnValue:Dynamic;
+
+	public var name(get, never):String;
+	public var interp(get, never):Interp;
+
+	function get_name():String
+		return script != null ? script.name : null;
+
+	function get_interp():Interp
+		return script != null ? script.interp : null;
 
 	#if LUA_ALLOWED
 	public var parentLua:FunkinLua;
@@ -44,11 +141,11 @@ class HScript extends Iris {
 			trace('initializing haxe interp for: ${parent.scriptName}');
 			try {
 				parent.hscript = new HScript(parent, code, varsToBring);
-			} catch (e:IrisError) {
+			} catch (e:HScriptError) {
 				var pos:HScriptInfos = cast {fileName: parent.scriptName, isLua: true};
 				if (parent.lastCalledFunction != '')
 					pos.funcName = parent.lastCalledFunction;
-				Iris.error(Printer.errorToString(e, false), pos);
+				HScript.error(describe(e), pos);
 				parent.hscript = null;
 			}
 		} else {
@@ -58,12 +155,12 @@ class HScript extends Iris {
 				hs.parse(true);
 				var ret:Dynamic = hs.execute();
 				hs.returnValue = ret;
-			} catch (e:IrisError) {
+			} catch (e:HScriptError) {
 				var pos:HScriptInfos = cast hs.interp.posInfos();
 				pos.isLua = true;
 				if (parent.lastCalledFunction != '')
 					pos.funcName = parent.lastCalledFunction;
-				Iris.error(Printer.errorToString(e, false), pos);
+				HScript.error(describe(e), pos);
 				hs.returnValue = null;
 			}
 		}
@@ -72,7 +169,7 @@ class HScript extends Iris {
 
 	public var origin:String;
 
-	override public function new(?parent:Dynamic, ?file:String, ?varsToBring:Any = null, ?manualRun:Bool = false) {
+	public function new(?parent:Dynamic, ?file:String, ?varsToBring:Any = null, ?manualRun:Bool = false) {
 		if (file == null)
 			file = '';
 
@@ -99,11 +196,20 @@ class HScript extends Iris {
 		if (scriptName == null && parent != null)
 			scriptName = parent.scriptName;
 		#end
-		super(scriptThing, new IrisConfig(scriptName, false, false));
-		var customInterp:CustomInterp = new CustomInterp();
-		customInterp.parentInstance = FlxG.state;
-		customInterp.showPosOnLog = false;
-		this.interp = customInterp;
+		if (HxScriptConfig.interpClass != CustomInterp)
+			HxScriptConfig.interpClass = CustomInterp;
+		watchDiagnostics();
+
+		scriptCode = scriptThing;
+		lastDiagnostic = null;
+		script = new PsychScript(scriptThing, scriptName != null ? scriptName : 'hscript');
+		if (script.program == null)
+			throw new HScriptError(describeLast('Failed to parse HScript: ${scriptName != null ? scriptName : filePath}'));
+
+		script.onProgramError = function(e:haxe.Exception) throw e;
+		cast(script.interp, CustomInterp).parentInstance = FlxG.state;
+		if (scriptName != null)
+			instances.set(scriptName, this);
 		#if LUA_ALLOWED
 		parentLua = parent;
 		if (parent != null) {
@@ -117,15 +223,14 @@ class HScript extends Iris {
 			try {
 				var ret:Dynamic = execute();
 				returnValue = ret;
-			} catch (e:IrisError) {
+			} catch (e:HScriptError) {
 				returnValue = null;
 				this.destroy();
 				throw e;
 			} catch (e:Dynamic) {
-				// Iris.execute can also throw ValueException / generic
-				// haxe.Exception (e.g. from Reflect.callMethod inside the
-				// interpreter); without this catch the partially-constructed
-				// HScript leaks and its global Iris listener stays registered.
+				// The interpreter can also throw a value that isn't a haxe.Exception
+				// (e.g. from Reflect.callMethod inside it); without this catch the
+				// partially-constructed HScript leaks and stays in the instances map.
 				returnValue = null;
 				this.destroy();
 				throw e;
@@ -135,8 +240,46 @@ class HScript extends Iris {
 
 	var varsToBring(default, set):Any = null;
 
-	override function preset() {
-		super.preset();
+	/** Runs the parsed program. Errors are rethrown, the way the callers below expect. */
+	public function execute():Dynamic {
+		return script != null ? script.start() : null;
+	}
+
+	/** Re-parses `scriptCode` in place. `force` is kept for call compatibility. */
+	public function parse(?force:Bool = false):Void {
+		if (script == null)
+			return;
+
+		lastDiagnostic = null;
+		if (script.parse(scriptCode) == null)
+			throw new HScriptError(describeLast('Failed to parse HScript: $name'));
+	}
+
+	public function set(varName:String, value:Dynamic, allowOverride:Bool = true):Void {
+		if (script == null)
+			return;
+
+		if (!allowOverride && script.variables.exists(varName))
+			return;
+
+		script.variables.set(varName, value);
+	}
+
+	public function get(field:String):Dynamic {
+		if (script == null)
+			return null;
+
+		return script.variables.exists(field) ? script.variables.get(field) : script.interp.getLocal(field);
+	}
+
+	public function exists(field:String):Bool {
+		if (script == null)
+			return false;
+
+		return script.variables.exists(field) || script.interp.getLocal(field) != null;
+	}
+
+	public function preset() {
 
 		// Some very commonly used classes
 		set('Type', Type);
@@ -202,7 +345,7 @@ class HScript extends Iris {
 		set('getModSetting', function(saveTag:String, ?modName:String = null) {
 			if (modName == null) {
 				if (this.modFolder == null) {
-					Iris.error('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', this.interp.posInfos());
+					HScript.error('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', this.interp.posInfos());
 					return null;
 				}
 				modName = this.modFolder;
@@ -323,7 +466,7 @@ class HScript extends Iris {
 			if (funk != null)
 				funk.addLocalCallback(name, func);
 			else
-				Iris.error('createCallback ($name): 3rd argument is null', this.interp.posInfos());
+				HScript.error('createCallback ($name): 3rd argument is null', this.interp.posInfos());
 		});
 		#end
 
@@ -334,8 +477,8 @@ class HScript extends Iris {
 					str = libPackage + '.';
 
 				set(libName, Type.resolveClass(str + libName));
-			} catch (e:IrisError) {
-				Iris.error(Printer.errorToString(e, false), this.interp.posInfos());
+			} catch (e:HScriptError) {
+				HScript.error(describe(e), this.interp.posInfos());
 			}
 		});
 		#if LUA_ALLOWED
@@ -364,7 +507,7 @@ class HScript extends Iris {
 			function(codeToRun:String, ?varsToBring:Any = null, ?funcToRun:String = null, ?funcArgs:Array<Dynamic> = null):Dynamic {
 				initHaxeModuleCode(funk, codeToRun, varsToBring);
 				if (funk.hscript != null) {
-					final retVal:IrisCall = funk.hscript.call(funcToRun, funcArgs);
+					final retVal:HScriptCall = funk.hscript.call(funcToRun, funcArgs);
 					if (retVal != null) {
 						return (LuaUtils.isLuaSupported(retVal.returnValue)) ? retVal.returnValue : null;
 					} else if (funk.hscript.returnValue != null) {
@@ -376,7 +519,7 @@ class HScript extends Iris {
 
 		funk.addLocalCallback("runHaxeFunction", function(funcToRun:String, ?funcArgs:Array<Dynamic> = null) {
 			if (funk.hscript != null) {
-				final retVal:IrisCall = funk.hscript.call(funcToRun, funcArgs);
+				final retVal:HScriptCall = funk.hscript.call(funcToRun, funcArgs);
 				if (retVal != null) {
 					return (LuaUtils.isLuaSupported(retVal.returnValue)) ? retVal.returnValue : null;
 				}
@@ -384,7 +527,7 @@ class HScript extends Iris {
 				var pos:HScriptInfos = cast {fileName: funk.scriptName, showLine: false};
 				if (funk.lastCalledFunction != '')
 					pos.funcName = funk.lastCalledFunction;
-				Iris.error("runHaxeFunction: HScript has not been initialized yet! Use \"runHaxeCode\" to initialize it", pos);
+				HScript.error("runHaxeFunction: HScript has not been initialized yet! Use \"runHaxeCode\" to initialize it", pos);
 			}
 			return null;
 		});
@@ -416,38 +559,39 @@ class HScript extends Iris {
 			try {
 				if (c != null)
 					funk.hscript.set(libName, c);
-			} catch (e:IrisError) {
-				Iris.error(Printer.errorToString(e, false), pos);
+			} catch (e:HScriptError) {
+				HScript.error(describe(e), pos);
 			}
 			FunkinLua.lastCalledScript = funk;
 			if (FunkinLua.getBool('luaDebugMode') && FunkinLua.getBool('luaDeprecatedWarnings'))
-				Iris.warn("addHaxeLibrary is deprecated! Import classes through \"import\" in HScript!", pos);
+				HScript.warn("addHaxeLibrary is deprecated! Import classes through \"import\" in HScript!", pos);
 		});
 	}
 	#end
 
-	override function call(funcToRun:String, ?args:Array<Dynamic>):IrisCall {
-		if (funcToRun == null || interp == null)
+	public function call(funcToRun:String, ?args:Array<Dynamic>):HScriptCall {
+		if (funcToRun == null || script == null)
 			return null;
 
 		if (!exists(funcToRun)) {
-			Iris.error('No function named: $funcToRun', this.interp.posInfos());
+			HScript.error('No function named: $funcToRun', this.interp.posInfos());
 			return null;
 		}
 
 		try {
-			var func:Dynamic = interp.variables.get(funcToRun); // function signature
+			var func:Dynamic = get(funcToRun); // function signature
 			if (!Reflect.isFunction(func)) {
 				// `exists()` returns true for any variable; Reflect.callMethod
 				// on a non-function value throws a generic exception that the
-				// IrisError/ValueException catch arms below don't cover, which
-				// then propagates out and breaks the calling Lua frame.
+				// catch arm below doesn't cover, which then propagates out and
+				// breaks the calling Lua frame.
 				return null;
 			}
-			final ret = Reflect.callMethod(null, func, args ?? []);
+			final ret = Reflect.callMethod(script.interp, func, args ?? []);
 			return {funName: funcToRun, signature: func, returnValue: ret};
-		} catch (e:IrisError) {
+		} catch (e:HScriptError) {
 			var pos:HScriptInfos = cast this.interp.posInfos();
+			pos.showLine = false;
 			pos.funcName = funcToRun;
 			#if LUA_ALLOWED
 			if (parentLua != null) {
@@ -456,26 +600,21 @@ class HScript extends Iris {
 					pos.funcName = parentLua.lastCalledFunction;
 			}
 			#end
-			Iris.error(Printer.errorToString(e, false), pos);
-		} catch (e:ValueException) {
-			var pos:HScriptInfos = cast this.interp.posInfos();
-			pos.funcName = funcToRun;
-			#if LUA_ALLOWED
-			if (parentLua != null) {
-				pos.isLua = true;
-				if (parentLua.lastCalledFunction != '')
-					pos.funcName = parentLua.lastCalledFunction;
-			}
-			#end
-			Iris.error('$e', pos);
+			HScript.error(describe(e), pos);
 		}
 		return null;
 	}
 
-	override public function destroy() {
+	public function destroy() {
+		if (name != null)
+			instances.remove(name);
+
 		origin = null;
 		#if LUA_ALLOWED parentLua = null; #end
-		super.destroy();
+		if (script != null) {
+			script.variables.clear();
+			script = null;
+		}
 	}
 
 	function set_varsToBring(values:Any) {
@@ -535,68 +674,35 @@ class CustomFlxColor {
 		return cast FlxColor.fromString(str);
 }
 
-class CustomInterp extends crowplexus.hscript.Interp {
-	public var parentInstance(default, set):Dynamic = [];
+class CustomInterp extends Interp {
+	public var parentInstance(default, set):Dynamic = null;
 
-	private var _instanceFields:Array<String>;
+	private var _instanceFields:Array<String> = [];
 
 	function set_parentInstance(inst:Dynamic):Dynamic {
 		parentInstance = inst;
-		if (parentInstance == null) {
-			_instanceFields = [];
-			return inst;
-		}
-		_instanceFields = Type.getInstanceFields(Type.getClass(inst));
+		_instanceFields = (inst == null) ? [] : Type.getInstanceFields(Type.getClass(inst));
 		return inst;
 	}
 
-	public function new() {
-		super();
+	public function new(?environment:hxscript.Environment, ?parent:Dynamic) {
+		super(environment, parent);
 	}
 
-	override function fcall(o:Dynamic, funcToRun:String, args:Array<Dynamic>):Dynamic {
-		for (_using in usings) {
-			var v = _using.call(o, funcToRun, args);
-			if (v != null)
-				return v;
-		}
+	override public function resolve(id:String):Dynamic {
+		// Scripts reach the running state's fields bare (`curBeat`, `boyfriend`). Everything the
+		// interpreter can resolve on its own still wins, so a local never loses to a state field.
+		if (parentInstance != null
+			&& _instanceFields.contains(id)
+			&& !locals.exists(id)
+			&& !variables.exists(id)
+			&& !imports.exists(id))
+			return Reflect.getProperty(parentInstance, id);
 
-		var f = get(o, funcToRun);
-
-		if (f == null) {
-			Iris.error('Tried to call null function $funcToRun', posInfos());
-			return null;
-		}
-
-		return Reflect.callMethod(o, f, args);
-	}
-
-	override function resolve(id:String):Dynamic {
-		if (locals.exists(id)) {
-			var l = locals.get(id);
-			return l.r;
-		}
-
-		if (variables.exists(id)) {
-			var v = variables.get(id);
-			return v;
-		}
-
-		if (imports.exists(id)) {
-			var v = imports.get(id);
-			return v;
-		}
-
-		if (parentInstance != null && _instanceFields.contains(id)) {
-			var v = Reflect.getProperty(parentInstance, id);
-			return v;
-		}
-
-		error(EUnknownVariable(id));
-
-		return null;
+		return super.resolve(id);
 	}
 }
+
 #else
 class HScript {
 	#if LUA_ALLOWED

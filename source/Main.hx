@@ -16,7 +16,7 @@ import openfl.display.StageScaleMode;
 import lime.app.Application;
 import states.TitleState;
 #if HSCRIPT_ALLOWED
-import crowplexus.iris.Iris;
+import psychlua.HScript;
 import psychlua.HScript.HScriptInfos;
 #end
 #if (linux || mac)
@@ -83,8 +83,8 @@ class Main extends Sprite {
 		Highscore.load();
 
 		#if HSCRIPT_ALLOWED
-		Iris.warn = function(x, ?pos:haxe.PosInfos) {
-			Iris.logLevel(WARN, x, pos);
+		HScript.warn = function(x, ?pos:haxe.PosInfos) {
+			HScript.logLevel(WARN, x, pos);
 			var newPos:HScriptInfos = cast pos;
 			if (newPos.showLine == null)
 				newPos.showLine = true;
@@ -102,8 +102,8 @@ class Main extends Sprite {
 			if (PlayState.instance != null)
 				PlayState.instance.addTextToDebug('WARNING: $msgInfo', FlxColor.YELLOW);
 		}
-		Iris.error = function(x, ?pos:haxe.PosInfos) {
-			Iris.logLevel(ERROR, x, pos);
+		HScript.error = function(x, ?pos:haxe.PosInfos) {
+			HScript.logLevel(ERROR, x, pos);
 			var newPos:HScriptInfos = cast pos;
 			if (newPos.showLine == null)
 				newPos.showLine = true;
@@ -121,8 +121,8 @@ class Main extends Sprite {
 			if (PlayState.instance != null)
 				PlayState.instance.addTextToDebug('ERROR: $msgInfo', FlxColor.RED);
 		}
-		Iris.fatal = function(x, ?pos:haxe.PosInfos) {
-			Iris.logLevel(FATAL, x, pos);
+		HScript.fatal = function(x, ?pos:haxe.PosInfos) {
+			HScript.logLevel(FATAL, x, pos);
 			var newPos:HScriptInfos = cast pos;
 			if (newPos.showLine == null)
 				newPos.showLine = true;
