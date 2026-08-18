@@ -11,6 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve engine version
+        shell: bash
+        run: echo "ENGINE_VERSION=$(tr -d '[:space:]' < gitVersion.txt)" >> "$GITHUB_ENV"
+
       - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.3.7
@@ -26,7 +30,7 @@ jobs:
         shell: cmd
 
       - name: Compile
-        run: haxelib run lime build Project.xml windows --app-version="1.0.4-${{ github.run_id }}"
+        run: haxelib run lime build Project.xml windows --app-version="${{ env.ENGINE_VERSION }}-${{ github.run_id }}"
 
       - name: Publish artifact
         uses: actions/upload-artifact@v7
@@ -38,6 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Resolve engine version
+        shell: bash
+        run: echo "ENGINE_VERSION=$(tr -d '[:space:]' < gitVersion.txt)" >> "$GITHUB_ENV"
 
       - uses: krdlab/setup-haxe@v2
         with:
@@ -57,7 +65,7 @@ jobs:
         run: echo "${{ github.run_id }}" > VERSION
 
       - name: Compile
-        run: haxelib run lime build Project.xml linux --app-version="1.0.4-${{ github.run_id }}"
+        run: haxelib run lime build Project.xml linux --app-version="${{ env.ENGINE_VERSION }}-${{ github.run_id }}"
 
       - name: Publish artifact
         uses: actions/upload-artifact@v7
@@ -69,6 +77,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
+
+      - name: Resolve engine version
+        shell: bash
+        run: echo "ENGINE_VERSION=$(tr -d '[:space:]' < gitVersion.txt)" >> "$GITHUB_ENV"
 
       - uses: krdlab/setup-haxe@v2
         with:
@@ -83,7 +95,7 @@ jobs:
         run: echo "${{ github.run_id }}" > VERSION
 
       - name: Compile
-        run: haxelib run lime build Project.xml mac --app-version="1.0.4-${{ github.run_id }}"
+        run: haxelib run lime build Project.xml mac --app-version="${{ env.ENGINE_VERSION }}-${{ github.run_id }}"
 
       - name: Publish artifact
         uses: actions/upload-artifact@v7

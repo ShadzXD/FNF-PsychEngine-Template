@@ -26,7 +26,8 @@
 	<define name="ACHIEVEMENTS_ALLOWED" />
 	<define name="DISCORD_ALLOWED" />
 	<define name="TRANSLATIONS_ALLOWED" />
-	<define name="IRIS_DEBUG"/>
+	<!--Uncomment to make HScript enforce the type annotations scripts write. Off by default they are parsed and ignored, the way hscript always treated them.-->
+	<!-- <define name="HXSCRIPT_TYPED"/> -->
 
 	<define name="MULTITHREADED_LOADING" />
 	<define name="SHOW_LOADING_SCREEN" />
@@ -124,7 +125,7 @@
 	<!--Psych stuff needed-->
 	<haxelib name="hxluajit" if="LUA_ALLOWED"/>
 	<haxelib name="hxluajit-wrapper" if="LUA_ALLOWED"/>
-	<haxelib name="hscript-iris" if="HSCRIPT_ALLOWED"/>
+	<haxelib name="hxscript" if="HSCRIPT_ALLOWED"/>
 	<haxelib name="hxvlc" if="VIDEOS_ALLOWED"/>
 	<haxelib name="hxhardware" if="HARDWARE_ALLOWED"/>
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED"/>
@@ -193,7 +194,7 @@
 	<haxeflag name="--macro" value="allowPackage('flash')" />
 	<haxeflag name="--macro" value="include('my.pack')" />
 
-	<haxedef name="hscriptPos" if="HSCRIPT_ALLOWED" />
+	<haxedef name="hxscript_dynamic" if="HSCRIPT_ALLOWED" unless="HXSCRIPT_TYPED" />
 
 	<!-- _________________________________ Custom _______________________________ -->
 

@@ -825,7 +825,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						addUndoAction(ADD_NOTE, {notes: addedNotes});
 
 					softReloadNotes(true);
-				} else if (FlxG.keys.justPressed.A != FlxG.keys.justPressed.D && !holdingAlt) {
+				} else if (FlxG.keys.justPressed.A != FlxG.keys.justPressed.D && !holdingAlt && !FlxG.keys.pressed.CONTROL) {
 					if (FlxG.sound.music.playing)
 						setSongPlaying(false);
 
@@ -863,7 +863,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 					else
 						loadSection(0);
 					Conductor.songPosition = FlxG.sound.music.time = vocals.time = opponentVocals.time = timeToGoBack;
-				} else if (FlxG.keys.pressed.W != FlxG.keys.pressed.S || FlxG.mouse.wheel != 0) {
+				} else if ((FlxG.keys.pressed.W != FlxG.keys.pressed.S && !FlxG.keys.pressed.CONTROL) || FlxG.mouse.wheel != 0) {
 					if (FlxG.sound.music.playing)
 						setSongPlaying(false);
 
@@ -948,9 +948,11 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						}
 						pushedNotes.sort((a:Array<Dynamic>, b:Array<Dynamic>) -> FlxSort.byValues(FlxSort.ASCENDING, a[0], b[0]));
 
-						var minTime:Float = pushedNotes[0][0];
-						for (note in pushedNotes)
-							note[0] -= minTime;
+						if (pushedNotes.length > 0) {
+							var minTime:Float = cachedSectionTimes[getSectionOfTime(pushedNotes[0][0])];
+							for (note in pushedNotes)
+								note[0] -= minTime;
+						}
 					}
 				} else if (FlxG.keys.justPressed.V) // Paste (Ctrl + V)
 				{
@@ -1064,15 +1066,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						note.updateSustainToZoom(cachedSectionCrochets[noteSec] / 4, curZoom);
 					}
 
-					for (event in events) {
-						var secNum:Int = 0;
-						for (time in cachedSectionTimes) {
-							if (time > event.strumTime)
-								break;
-							secNum++;
-						}
-						positionNoteYOnTime(event, secNum);
-					}
+					for (event in events)
+						positionNoteYOnTime(event, getSectionOfTime(event.strumTime));
 					loadSection();
 					showOutput('Zoom: ${Math.round(curZoom * 100)}%');
 					updateScrollY();
@@ -1398,14 +1393,17 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			var sineValue:Float = 0.75 + Math.cos(Math.PI * noteSelectionSine * (isMovingNotes ? 8 : 2)) / 4;
 			// trace(sineValue);
 
-			var qPress = FlxG.keys.justPressed.Q;
-			var ePress = FlxG.keys.justPressed.E;
+			var canTypeKeys:Bool = (PsychUIInputText.focusOn == null && lastFocus == null);
+			var qPress = canTypeKeys && FlxG.keys.justPressed.Q;
+			var ePress = canTypeKeys && FlxG.keys.justPressed.E;
 			var addSus = (FlxG.keys.pressed.SHIFT ? 4 : 1) * (Conductor.stepCrochet / 2);
 			if (qPress)
 				addSus *= -1;
 
-			if (qPress != ePress && selectedNotes.length != 1)
+			if (qPress != ePress && selectedNotes.length != 1) {
 				susLengthStepper.value += addSus;
+				susLengthLastVal = susLengthStepper.value;
+			}
 
 			var noteSec:Int = 0;
 			for (note in selectedNotes) {
@@ -1418,8 +1416,10 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 							noteSec++;
 
 						note.setSustainLength(note.sustainLength + addSus, cachedSectionCrochets[noteSec] / 4, curZoom);
-						if (selectedNotes.length == 1)
+						if (selectedNotes.length == 1) {
 							susLengthStepper.value = note.sustainLength;
+							susLengthLastVal = susLengthStepper.value;
+						}
 					}
 					note.animation.update(elapsed); // let selected notes be animated for better visibility
 				}
@@ -1446,14 +1446,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 
 			if (!note.isEvent) {
 				notes.remove(note);
-				var secNum:Int = 0;
-				for (time in cachedSectionTimes) {
-					if (time > note.strumTime)
-						break;
-					secNum++;
-				}
 				originalNotes.push(note);
-				var mov:MetaNote = createNote(note.songData, secNum);
+				var mov:MetaNote = createNote(note.songData, getSectionOfTime(note.strumTime));
 				movingNotes.add(mov);
 				movedNotes.push(mov);
 			} else {
@@ -1568,6 +1562,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	}
 
 	function onSelectNote() {
+		susLengthStepper.min = (selectedNotes.length > 1) ? -susLengthStepper.max : 0;
 		if (selectedNotes.length == 1) // Only one note selected
 		{
 			var note:MetaNote = selectedNotes[0];
@@ -1587,7 +1582,6 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				updateSelectedEventText();
 			}
 		} else if (selectedNotes.length > 1) {
-			susLengthStepper.min = -susLengthStepper.max;
 			susLengthLastVal = susLengthStepper.value = 0;
 			strumTimeStepper.value = selectedNotes[0].strumTime;
 			noteTypeDropDown.selectedLabel = '';
@@ -1874,13 +1868,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		swagEvent.scrollFactor.x = 0;
 		swagEvent.active = false;
 
-		var secNum:Int = 0;
-		for (i in 1...cachedSectionTimes.length) {
-			if (cachedSectionTimes[i] > daStrumTime)
-				break;
-			secNum++;
-		}
-		positionNoteYOnTime(swagEvent, secNum);
+		positionNoteYOnTime(swagEvent, getSectionOfTime(daStrumTime));
 		return swagEvent;
 	}
 
@@ -2040,7 +2028,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 
 			strumTimeStepper.step = Conductor.stepCrochet;
 			susLengthStepper.step = cachedSectionCrochets[curSec] / 4 / 2;
-			susLengthStepper.max = susLengthStepper.step * 128;
+			susLengthStepper.max = susLengthStepper.step * 256;
 			if (selectedNotes.length > 1)
 				susLengthStepper.min = -susLengthStepper.max;
 			else
@@ -2116,6 +2104,20 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				}
 			}
 		}
+	}
+
+	function getSectionOfTime(time:Float):Int {
+		var secNum:Int = 0;
+		for (i in 1...cachedSectionTimes.length) {
+			if (cachedSectionTimes[i] > time)
+				break;
+			secNum++;
+		}
+
+		var lastSec:Int = cachedSectionCrochets.length - 1;
+		if (secNum > lastSec)
+			secNum = lastSec;
+		return (secNum > 0) ? secNum : 0;
 	}
 
 	function getMinNoteTime(sec:Int) {
@@ -2535,7 +2537,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			if (susLengthLastVal != susLengthStepper.value) {
 				if (selectedNotes.length > 1) {
 					for (note in selectedNotes) {
-						if (note == null && !note.isEvent)
+						if (note == null || note.isEvent)
 							continue;
 						note.setSustainLength(note.sustainLength + (susLengthStepper.value - susLengthLastVal), Conductor.stepCrochet, curZoom);
 					}
@@ -2616,15 +2618,14 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		var objY = 10;
 		function copyNotesOnSection(?secOff:Int = 0, ?showMessage:Bool = true) // Used on "Copy Section" and "Copy Last Section" buttons
 		{
-			var curSectionTime:Null<Float> = cachedSectionTimes[curSec - secOff];
-			if (curSectionTime == null) {
+			var secNum:Int = curSec - secOff;
+			if (secNum < 0 || secNum >= cachedSectionCrochets.length) {
 				// showOutput('ERROR: Unknown section??', true);
 				return;
 			}
 
-			var nextSectionTime:Null<Float> = cachedSectionTimes[curSec - secOff + 1];
-			if (nextSectionTime == null)
-				Math.POSITIVE_INFINITY;
+			var curSectionTime:Float = cachedSectionTimes[secNum];
+			var nextSectionTime:Float = (secNum + 1 < cachedSectionTimes.length) ? cachedSectionTimes[secNum + 1] : Math.POSITIVE_INFINITY;
 
 			var notesCopyNum:Int = 0;
 			if (affectNotes.checked) {
@@ -4405,15 +4406,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			note.updateSustainToStepCrochet(cachedSectionCrochets[noteSec] / 4);
 		}
 
-		for (event in events) {
-			var secNum:Int = 0;
-			for (time in cachedSectionTimes) {
-				if (time > event.strumTime)
-					break;
-				secNum++;
-			}
-			positionNoteYOnTime(event, secNum);
-		}
+		for (event in events)
+			positionNoteYOnTime(event, getSectionOfTime(event.strumTime));
 
 		var time:Float = FlxMath.remapToRange(gridLerp, 0, 1, cachedSectionTimes[curSec], cachedSectionTimes[curSec + 1]);
 		if (Math.isNaN(time)) {

@@ -15,13 +15,13 @@
 		{
 			"name": "flixel",
 			"type": "haxelib",
-			"version": "6.1.2",
+			"version": "6.2.0",
 			"dir": null
 		},
 		{
 			"name": "flixel-addons",
 			"type": "haxelib",
-			"version": "4.0.1",
+			"version": "4.0.2",
 			"dir": null
 		},
 		{
@@ -49,9 +49,9 @@
 			"url": "https://gitlab.com/haxe-grig/grig.audio"
 		},
 		{
-			"name": "hscript-iris",
+			"name": "hxscript",
 			"type": "haxelib",
-			"version": "1.1.3",
+			"version": "2.0.2",
 			"dir": null
 		},
 		{
@@ -70,7 +70,7 @@
 			"name": "hxcpp",
 			"type": "git",
 			"dir": null,
-			"ref": "v4.3.143",
+			"ref": "v4.3.152",
 			"url": "https://github.com/HaxeFoundation/hxcpp"
 		},
 		{
@@ -106,7 +106,7 @@
 		{
 			"name": "tink_core",
 			"type": "haxelib",
-			"version": "2.1.1",
+			"version": "1.26.0",
 			"dir": null
 		},
 		{

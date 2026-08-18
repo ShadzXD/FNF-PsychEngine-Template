@@ -12,7 +12,7 @@ echo.
 echo Installing hxcpp from git first (so no haxelib installs outdated versions)...
 echo.
 
-call :installGit hxcpp https://github.com/HaxeFoundation/hxcpp v4.3.143
+call :installGit hxcpp https://github.com/HaxeFoundation/hxcpp v4.3.152
 
 echo.
 echo Installing haxelib dependencies (--skip-dependencies, all transitive deps are manually asserted)...
@@ -21,10 +21,10 @@ echo.
 
 call haxelib install lime               8.3.2  --quiet --always --skip-dependencies
 call haxelib install openfl             9.5.2  --quiet --always --skip-dependencies
-call haxelib install flixel             6.1.2  --quiet --always --skip-dependencies
-call haxelib install flixel-addons      4.0.1  --quiet --always --skip-dependencies
+call haxelib install flixel             6.2.0  --quiet --always --skip-dependencies
+call haxelib install flixel-addons      4.0.2  --quiet --always --skip-dependencies
 call haxelib install flixel-tools       1.5.1  --quiet --always --skip-dependencies
-call haxelib install hscript-iris       1.1.3  --quiet --always --skip-dependencies
+call haxelib install hxscript           2.0.2  --quiet --always --skip-dependencies
 call haxelib install hscript            2.7.0  --quiet --always --skip-dependencies
 call haxelib install hxcpp-debug-server 1.2.4  --quiet --always --skip-dependencies
 call haxelib install hxdiscord_rpc      1.3.0  --quiet --always --skip-dependencies

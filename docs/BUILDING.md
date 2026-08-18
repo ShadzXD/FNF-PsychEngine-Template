@@ -97,7 +97,7 @@ Both setup scripts install the dependencies listed below. Versions are pinned in
 | `flixel`             | haxelib                                        |
 | `flixel-addons`      | haxelib                                        |
 | `flixel-tools`       | haxelib                                        |
-| `hscript-iris`       | haxelib                                        |
+| `hxscript`           | haxelib                                        |
 | `hscript`            | haxelib                                        |
 | `hxcpp-debug-server` | haxelib                                        |
 | `hxdiscord_rpc`      | haxelib                                        |

@@ -13,7 +13,7 @@ wants a more stable and faster experience.
 It leaves out the fork's larger rewrites (Note System V2, osu! converter, Android port, reworked
 editors, SmidrUI, `hscript-insanity` — Iris is kept).
 
-So this can be considered Psych Engine 1.0.5 basically and that's what the engine will report itself as.
+So this can be considered Psych Engine 1.0.6 basically and that's what the engine will report itself as.
 
 See **[docs/CHANGES.md](docs/CHANGES.md)** for the full, commit-linked list of everything
 changed versus stock 1.0.4, and **[docs/SCRIPT_MIGRATION.md](docs/SCRIPT_MIGRATION.md)** for how
