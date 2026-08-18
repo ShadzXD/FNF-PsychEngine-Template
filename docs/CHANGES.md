@@ -25,7 +25,7 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 
 | Library              | Stock 1.0.4        | This branch      | Notes                                                              |
 | -------------------- | ------------------ | ---------------- | ------------------------------------------------------------------ |
-| `flixel`             | 5.6.1              | **6.1.2**        | **Major** upgrade                                                  |
+| `flixel`             | 5.6.1              | **6.2.0**        | **Major** upgrade                                                  |
 | `flixel-addons`      | 3.2.2              | **4.0.1**        | **Major** upgrade                                                  |
 | `lime`               | (transitive)       | **8.3.2**        |                                                                    |
 | `openfl`             | (transitive)       | **9.5.2**        | Needed a `PsychUIInputText` caret clamp (RangeError)              |
@@ -34,7 +34,7 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 | `hxscript`           | —                  | **2.0.0 (new)**  | HScript backend; type enforcement off by default                  |
 | `hxvlc`              | 2.0.1              | **2.3.0**        | + `precacheVideo` warming API                                     |
 | `hxdiscord_rpc`      | 1.2.4              | **1.3.0**        |                                                                    |
-| `hxcpp`              | release (system)   | **git `v4.3.143`** | Pinned tag; built from source in setup                          |
+| `hxcpp`              | release (system)   | **git `v4.3.152`** | Pinned tag; built from source in setup                          |
 | `hxcpp-debug-server` | (not listed)       | **1.2.4**        | New pin                                                            |
 | `tink_core`          | (transitive)       | **2.1.1**        | New pin                                                            |
 | `flxanimate`         | git (Dot-Stuff)    | git (Dot-Stuff)  | **Kept**                            |
