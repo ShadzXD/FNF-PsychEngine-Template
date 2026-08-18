@@ -51,7 +51,7 @@
 		{
 			"name": "hxscript",
 			"type": "haxelib",
-			"version": "2.0.0",
+			"version": "2.0.1",
 			"dir": null
 		},
 		{
@@ -106,7 +106,7 @@
 		{
 			"name": "tink_core",
 			"type": "haxelib",
-			"version": "2.1.1",
+			"version": "1.26.0",
 			"dir": null
 		},
 		{

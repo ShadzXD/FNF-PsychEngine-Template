@@ -31,12 +31,12 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 | `openfl`             | (transitive)       | **9.5.2**        | Needed a `PsychUIInputText` caret clamp (RangeError)              |
 | `hscript`            | (transitive)       | **2.7.0**        | Now explicitly pinned                                             |
 | `hscript-iris`       | 1.1.3              | **removed**      | Replaced by `hxscript`                                            |
-| `hxscript`           | —                  | **2.0.0 (new)**  | HScript backend; type enforcement off by default                  |
+| `hxscript`           | —                  | **2.0.1 (new)**  | HScript backend; type enforcement off by default                  |
 | `hxvlc`              | 2.0.1              | **2.3.0**        | + `precacheVideo` warming API                                     |
 | `hxdiscord_rpc`      | 1.2.4              | **1.3.0**        |                                                                    |
 | `hxcpp`              | release (system)   | **git `v4.3.152`** | Pinned tag; built from source in setup                          |
 | `hxcpp-debug-server` | (not listed)       | **1.2.4**        | New pin                                                            |
-| `tink_core`          | (transitive)       | **2.1.1**        | New pin                                                            |
+| `tink_core`          | (transitive)       | **1.26.0**       | New pin                                                            |
 | `flxanimate`         | git (Dot-Stuff)    | git (Dot-Stuff)  | **Kept**                            |
 | `linc_luajit`        | git                | **removed**      | Replaced by `hxluajit` + `hxluajit-wrapper`                       |
 | `hxhardware`         | —                  | **git (new)**    | CPU/GPU/memory metrics for the FPS counter (`HARDWARE_ALLOWED`)   |
