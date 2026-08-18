@@ -14,9 +14,10 @@ this branch's own version string, not an upstream Psych release.
 
 Every commit below is linked to this repository. Grouped by type, newest-toolchain first.
 
-> **Intentionally kept from stock 1.0.4:** `hscript-iris` (Iris was **not** swapped for
-> Insanity) and Dot-Stuff `flxanimate` (**not** swapped for MaybeMaru's `flixel-animate`,
-> which regressed atlas offsets). `hxluajit` **does** replace `linc_luajit`.
+> **Intentionally kept from stock 1.0.4:** Dot-Stuff `flxanimate` (**not** swapped for
+> MaybeMaru's `flixel-animate`, which regressed atlas offsets). `hxluajit` **does** replace
+> `linc_luajit`, and `hxscript` **does** replace `hscript-iris` (Iris was never swapped for
+> Insanity; it was replaced outright).
 
 ---
 
@@ -29,7 +30,8 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 | `lime`               | (transitive)       | **8.3.2**        |                                                                    |
 | `openfl`             | (transitive)       | **9.5.2**        | Needed a `PsychUIInputText` caret clamp (RangeError)              |
 | `hscript`            | (transitive)       | **2.7.0**        | Now explicitly pinned                                             |
-| `hscript-iris`       | 1.1.3              | 1.1.3            | **Kept** (not replaced with Insanity)                            |
+| `hscript-iris`       | 1.1.3              | **removed**      | Replaced by `hxscript`                                            |
+| `hxscript`           | —                  | **2.0.0 (new)**  | HScript backend; type enforcement off by default                  |
 | `hxvlc`              | 2.0.1              | **2.3.0**        | + `precacheVideo` warming API                                     |
 | `hxdiscord_rpc`      | 1.2.4              | **1.3.0**        |                                                                    |
 | `hxcpp`              | release (system)   | **git `v4.3.143`** | Pinned tag; built from source in setup                          |
@@ -244,6 +246,7 @@ Repacked base-game/shared spritesheets (smaller atlases; frame names preserved).
 - [`460d3d3`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/460d3d391aa725f559029a3d50da542be604dc89) — HealthIcon: default to CPU caching, not GPU
 - [`d4519b0`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/d4519b03186f9d026d4a732cf6ea39597c56e19f) — DialogueBox: turn antialiasing off on the week 6 pixel sprites
 - [`cf91d2b`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cf91d2b0a163899b6e8429da5b6aa7a8867a97d5) — ChartingState: fix copy/paste offsets, hold note editing and section lookups
+- [`5b5764c`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/5b5764c309ef5855854a5eef6d95b96c3ce94c1e) — HScript: run on hxscript, with type enforcement off by default
 
 - **Preload filter bitmask** now coerced with `Std.int` — stock code read the byte-based
   filter straight off `Dynamic`, which miscompiles on hxcpp and could zero the mask, silently
@@ -255,6 +258,13 @@ Repacked base-game/shared spritesheets (smaller atlases; frame names preserved).
   antialiasing pref, so every sprite made without an explicit value inherits it. The week 6
   dialogue never set one (unlike the School/SchoolEvil stages, which turn it off on every pixel
   sprite), leaving the box, portraits, spirit face and hand cursor blurry.
+- **HScript runs on `hxscript`** — `hscript-iris` is gone. `HScript` owns an interpreter instead
+  of being one, so the surface the engine calls is unchanged and no mod script has to be rewritten.
+  hscript parsed type annotations and ignored them, hxscript enforces them, so the build defines
+  `hxscript_dynamic` unless `HXSCRIPT_TYPED` is set in `Project.xml` — annotations stay ignored by
+  default and an existing mod behaves as before. `HScript.typedMode` flips it at runtime. Script
+  errors now report `file:line:column`, the offending source line with a caret under it, a hint,
+  and the call stack across script functions and back into the engine, rather than a bare message.
 - **Chart editor copy/paste, hold notes and section lookups** — Ctrl + C stored clipboard times
   relative to the earliest selected note instead of the section start, so pastes only landed
   correctly in section 0. The Sustain stepper desynced from the Q/E keys, capped holds at half of
