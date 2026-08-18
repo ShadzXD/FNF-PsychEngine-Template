@@ -36,7 +36,7 @@ haxelib install openfl             9.5.2  --quiet --always --skip-dependencies
 haxelib install flixel             6.2.0  --quiet --always --skip-dependencies
 haxelib install flixel-addons      4.0.2  --quiet --always --skip-dependencies
 haxelib install flixel-tools       1.5.1  --quiet --always --skip-dependencies
-haxelib install hxscript           2.0.1  --quiet --always --skip-dependencies
+haxelib install hxscript           2.0.2  --quiet --always --skip-dependencies
 haxelib install hscript            2.7.0  --quiet --always --skip-dependencies
 haxelib install hxcpp-debug-server 1.2.4  --quiet --always --skip-dependencies
 haxelib install hxdiscord_rpc      1.3.0  --quiet --always --skip-dependencies
