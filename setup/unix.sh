@@ -34,7 +34,7 @@ echo "This might take a few moments depending on your internet speed."
 haxelib install lime               8.3.2  --quiet --always --skip-dependencies
 haxelib install openfl             9.5.2  --quiet --always --skip-dependencies
 haxelib install flixel             6.2.0  --quiet --always --skip-dependencies
-haxelib install flixel-addons      4.0.1  --quiet --always --skip-dependencies
+haxelib install flixel-addons      4.0.2  --quiet --always --skip-dependencies
 haxelib install flixel-tools       1.5.1  --quiet --always --skip-dependencies
 haxelib install hxscript           2.0.0  --quiet --always --skip-dependencies
 haxelib install hscript            2.7.0  --quiet --always --skip-dependencies

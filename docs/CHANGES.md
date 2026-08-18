@@ -26,7 +26,7 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 | Library              | Stock 1.0.4        | This branch      | Notes                                                              |
 | -------------------- | ------------------ | ---------------- | ------------------------------------------------------------------ |
 | `flixel`             | 5.6.1              | **6.2.0**        | **Major** upgrade                                                  |
-| `flixel-addons`      | 3.2.2              | **4.0.1**        | **Major** upgrade                                                  |
+| `flixel-addons`      | 3.2.2              | **4.0.2**        | **Major** upgrade                                                  |
 | `lime`               | (transitive)       | **8.3.2**        |                                                                    |
 | `openfl`             | (transitive)       | **9.5.2**        | Needed a `PsychUIInputText` caret clamp (RangeError)              |
 | `hscript`            | (transitive)       | **2.7.0**        | Now explicitly pinned                                             |
