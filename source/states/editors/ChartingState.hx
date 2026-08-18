@@ -825,7 +825,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						addUndoAction(ADD_NOTE, {notes: addedNotes});
 
 					softReloadNotes(true);
-				} else if (FlxG.keys.justPressed.A != FlxG.keys.justPressed.D && !holdingAlt) {
+				} else if (FlxG.keys.justPressed.A != FlxG.keys.justPressed.D && !holdingAlt && !FlxG.keys.pressed.CONTROL) {
 					if (FlxG.sound.music.playing)
 						setSongPlaying(false);
 
@@ -863,7 +863,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 					else
 						loadSection(0);
 					Conductor.songPosition = FlxG.sound.music.time = vocals.time = opponentVocals.time = timeToGoBack;
-				} else if (FlxG.keys.pressed.W != FlxG.keys.pressed.S || FlxG.mouse.wheel != 0) {
+				} else if ((FlxG.keys.pressed.W != FlxG.keys.pressed.S && !FlxG.keys.pressed.CONTROL) || FlxG.mouse.wheel != 0) {
 					if (FlxG.sound.music.playing)
 						setSongPlaying(false);
 
