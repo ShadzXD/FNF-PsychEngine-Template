@@ -182,9 +182,12 @@ class UpdateManager {
 		if (best == null)
 			return null;
 
+		// The build asset for the platform this copy is running on. Release assets are named after
+		// their platform (PsychEngine-windows.zip, -linux.zip, -macos.zip), so match on that.
+		var want:String = #if mac 'mac' #elseif linux 'linux' #else 'windows' #end;
 		var zip:ReleaseAsset = findAsset(best.assets, a -> {
 			var n:String = a.name.toLowerCase();
-			return n.indexOf('windows') >= 0 && n.endsWith('.zip');
+			return n.indexOf(want) >= 0 && n.endsWith('.zip');
 		});
 		var sums:ReleaseAsset = findAsset(best.assets, a -> a.name.toLowerCase().indexOf('sha256sums') >= 0);
 

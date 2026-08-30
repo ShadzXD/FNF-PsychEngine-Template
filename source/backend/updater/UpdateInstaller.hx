@@ -27,6 +27,9 @@ extern "C" __declspec(dllimport) unsigned long __stdcall GetCurrentProcessId(voi
 extern "C" __declspec(dllimport) void* __stdcall OpenProcess(unsigned long, int, unsigned long);
 extern "C" __declspec(dllimport) unsigned long __stdcall WaitForSingleObject(void*, unsigned long);
 extern "C" __declspec(dllimport) int __stdcall CloseHandle(void*);')
+#elseif (cpp && !windows)
+@:cppFileCode('#include <unistd.h>
+#include <signal.h>')
 #end
 
 /**
@@ -44,6 +47,7 @@ class UpdateInstaller {
 	static var MAX_APPLY_TRIES:Int = 3;
 
 	static var SKIP_PREFIXES:Array<String> = ['mods/', 'update_tmp/', 'update_staging/'];
+	static var SKIP_FILES:Array<String> = ['modslist.txt']; // user data: which mods the player enabled
 
 	#if sys
 	final info:UpdateInfo;
@@ -70,18 +74,52 @@ class UpdateInstaller {
 		this.info = info;
 	}
 
+	/**
+	 * The .app bundle the running build lives in, or null when this build is not one.
+	 * @return The absolute path of the bundle directory, or null
+	 */
+	static function bundlePath():String {
+		#if mac
+		// Sys.programPath() is <bundle>/Contents/MacOS/<exe>, so the bundle is three levels up.
+		var bundle:String = Path.directory(Path.directory(Path.directory(Sys.programPath())));
+		if (bundle != null && bundle.toLowerCase().endsWith('.app'))
+			return bundle;
+		#end
+		return null;
+	}
+
+	/**
+	 * The folder an update installs into: the one holding the executable, or on macOS the one
+	 * holding the .app bundle, since there the whole bundle is what gets replaced.
+	 * @return The absolute path of the install root
+	 */
+	static function installRoot():String {
+		var bundle:String = bundlePath();
+		return (bundle != null) ? Path.directory(bundle) : Path.directory(Sys.programPath());
+	}
+
 	public function start():Void {
-		root = Path.directory(Sys.programPath());
+		root = installRoot();
 		tmpDir = Path.join([root, DIR_TMP]);
 		stageDir = Path.join([root, DIR_STAGING]);
 
 		log('Update ${info.tag} selected.');
 		if (info.zipUrl == null) {
-			fail('Release has no Windows build to download.');
+			fail('Release has no build for this platform to download.');
 			return;
 		}
 		if (info.zipSha256 == null && info.sumsUrl == null) {
 			fail('Release has no checksum (GitHub digest or SHA256SUMS.txt) -- refusing to install an unverified build.');
+			return;
+		}
+		if (!isWritable(root)) {
+			// Asked before the download rather than after it: on macOS the install root is usually
+			// /Applications, and there is no point pulling several hundred megabytes to find out.
+			log('Install folder is not writable (needs administrator/root?).');
+			mutex.acquire();
+			_needElevation = true;
+			mutex.release();
+			setPhase('need-elevation');
 			return;
 		}
 
@@ -152,10 +190,26 @@ class UpdateInstaller {
 	 * Relaunches the application after update installation is complete.
 	 */
 	public function relaunch():Void {
+		spawnSelf();
+		Sys.exit(0);
+	}
+
+	/**
+	 * Starts a fresh copy of this build and leaves it running on its own.
+	 * On macOS the bundle is handed to `open` so the new instance comes up as an application
+	 * rather than as a bare child process with no Dock entry of its own.
+	 */
+	static function spawnSelf():Void {
 		try {
+			#if mac
+			var bundle:String = bundlePath();
+			if (bundle != null) {
+				Sys.command('open', ['-n', bundle]);
+				return;
+			}
+			#end
 			new sys.io.Process(Sys.programPath(), []);
 		} catch (e:Dynamic) {}
-		Sys.exit(0);
 	}
 
 	/**
@@ -237,15 +291,6 @@ class UpdateInstaller {
 				extractZip(localZip, stageDir);
 				forceDelete(localZip);
 
-				if (!isWritable(root)) {
-					log('Install folder is not writable (admin/Program Files?).');
-					mutex.acquire();
-					_needElevation = true;
-					mutex.release();
-					setPhase('need-elevation');
-					return;
-				}
-
 				File.saveContent(Path.join([stageDir, MARKER_READY]), 'ready');
 				File.saveContent(Path.join([stageDir, MARKER_PID]), Std.string(currentPid()));
 				log('Update staged. Restarting to finish install...');
@@ -289,7 +334,128 @@ class UpdateInstaller {
 			File.saveBytes(outPath, haxe.zip.Reader.unzip(entry));
 			entry.data = null;
 		}
+
+		#if !windows
+		restoreUnixModes(zipPath, dest);
+		ensureMainExecutable(effectiveBuildRoot(dest));
+		#end
 	}
+
+	#if !windows
+	/**
+	 * Restores the executable bits the archive recorded.
+	 * A zip keeps Unix permissions in the central directory's external attributes, and
+	 * haxe.zip.Reader never reads those -- it stops at the first central directory record -- so
+	 * every extracted file lands under the umask and the game's own binary comes out unrunnable.
+	 * @param zipPath The archive that was extracted
+	 * @param dest The directory it was extracted into
+	 */
+	function restoreUnixModes(zipPath:String, dest:String):Void {
+		var wanted:Array<String> = [];
+		try {
+			wanted = zipExecutables(zipPath);
+		} catch (e:Dynamic) {
+			log('Could not read permissions from the archive: ${Std.string(e)}');
+			return;
+		}
+
+		var paths:Array<String> = [];
+		for (rel in wanted) {
+			var p:String = Path.join([dest, rel]);
+			if (FileSystem.exists(p))
+				paths.push(p);
+		}
+		if (paths.length == 0)
+			return;
+
+		var at:Int = 0;
+		while (at < paths.length) {
+			var chunk:Array<String> = paths.slice(at, at + 128); // keep well inside the argument limit
+			chunk.unshift('+x');
+			Sys.command('chmod', chunk);
+			at += 128;
+		}
+		log('Restored the executable bit on ${paths.length} file(s).');
+	}
+
+	/**
+	 * Reads the archive's central directory and lists the entries whose recorded Unix mode has
+	 * any execute bit set.
+	 * @param zipPath The archive to read
+	 * @return The relative paths of the executable entries
+	 */
+	function zipExecutables(zipPath:String):Array<String> {
+		var out:Array<String> = [];
+		var f:sys.io.FileInput = File.read(zipPath, true);
+		try {
+			var size:Int = FileSystem.stat(zipPath).size;
+			var scan:Int = (size < 66000) ? size : 66000; // 64K comment cap plus the record itself
+			f.seek(size - scan, SeekBegin);
+			var tail:Bytes = f.read(scan);
+
+			var eocd:Int = -1;
+			var i:Int = tail.length - 22;
+			while (i >= 0) {
+				if (tail.get(i) == 0x50 && tail.get(i + 1) == 0x4B && tail.get(i + 2) == 0x05 && tail.get(i + 3) == 0x06) {
+					eocd = i;
+					break;
+				}
+				i--;
+			}
+			if (eocd < 0)
+				throw 'no end-of-central-directory record';
+
+			var count:Int = tail.getUInt16(eocd + 10);
+			var cdOffset:Int = tail.getInt32(eocd + 16);
+			if (count == 0xFFFF || cdOffset == -1)
+				throw 'zip64 archives are not read here';
+
+			f.seek(cdOffset, SeekBegin);
+			for (n in 0...count) {
+				if (f.readInt32() != 0x02014B50)
+					break;
+				f.seek(24, SeekCur); // version, flags, method, time, crc, both sizes
+				var nameLen:Int = f.readUInt16();
+				var extraLen:Int = f.readUInt16();
+				var commentLen:Int = f.readUInt16();
+				f.seek(4, SeekCur); // start disk, internal attributes
+				var external:Int = f.readInt32();
+				f.seek(4, SeekCur); // local header offset
+				var name:String = f.readString(nameLen);
+				f.seek(extraLen + commentLen, SeekCur);
+
+				var mode:Int = (external >> 16) & 0xFFFF;
+				if ((mode & 73) != 0 && !name.endsWith('/')) // 73 = 0o111
+					out.push(name.split('\\').join('/'));
+			}
+		} catch (e:Dynamic) {
+			try
+				f.close()
+			catch (e2:Dynamic) {}
+			throw e;
+		}
+		f.close();
+		return out;
+	}
+
+	/**
+	 * Guarantees the game's own binary comes out of the archive executable even when the archive
+	 * recorded no Unix permissions at all, which is what a zip built on Windows carries.
+	 * @param buildRoot The extracted build's root directory
+	 */
+	function ensureMainExecutable(buildRoot:String):Void {
+		var exe:String = Path.withoutDirectory(Sys.programPath());
+		var candidates:Array<String> = [Path.join([buildRoot, exe])];
+
+		var bundle:String = bundlePath();
+		if (bundle != null)
+			candidates.push(Path.join([buildRoot, Path.withoutDirectory(bundle), 'Contents', 'MacOS', exe]));
+
+		for (p in candidates)
+			if (FileSystem.exists(p))
+				Sys.command('chmod', ['+x', p]);
+	}
+	#end
 
 	/**
 	 * Determines the effective build root directory, unwrapping single-directory zips.
@@ -312,7 +478,8 @@ class UpdateInstaller {
 				break;
 
 			var only:String = Path.join([cur, items[0]]);
-			if (!FileSystem.isDirectory(only))
+			// A bundle is the build, not a folder wrapped around one, so stop at it.
+			if (!FileSystem.isDirectory(only) || items[0].toLowerCase().endsWith('.app'))
 				break;
 			cur = only;
 		}
@@ -326,6 +493,12 @@ class UpdateInstaller {
 	 * @return The files to install, in walk order
 	 */
 	static function collectStaged(srcRoot:String, dstRoot:String):Array<StagedFile> {
+		#if mac
+		var bundleName:String = stagedBundleName(srcRoot);
+		if (bundleName != null)
+			return bundleSwap(srcRoot, dstRoot, bundleName);
+		#end
+
 		var out:Array<StagedFile> = [];
 		function walk(dir:String) {
 			for (name in FileSystem.readDirectory(dir)) {
@@ -345,6 +518,45 @@ class UpdateInstaller {
 		walk(srcRoot);
 		return out;
 	}
+
+	#if mac
+	/**
+	 * The name of the .app bundle a staged macOS build consists of, or null when the staging does
+	 * not hold one.
+	 * @param srcRoot The staged update source directory
+	 * @return The bundle's directory name, or null
+	 */
+	static function stagedBundleName(srcRoot:String):String {
+		for (name in FileSystem.readDirectory(srcRoot))
+			if (name.toLowerCase().endsWith('.app') && FileSystem.isDirectory(Path.join([srcRoot, name])))
+				return name;
+		return null;
+	}
+
+	/**
+	 * The moves that install a macOS build. The bundle is replaced whole rather than file by
+	 * file, so nothing of the old build is left inside it, and the player's own files are then
+	 * carried across out of the bundle the swap moved aside.
+	 * @param srcRoot The staged update source directory
+	 * @param dstRoot The destination root directory
+	 * @param bundleName The bundle's directory name
+	 * @return The moves to perform, in order
+	 */
+	static function bundleSwap(srcRoot:String, dstRoot:String, bundleName:String):Array<StagedFile> {
+		var installed:String = Path.join([dstRoot, bundleName]);
+		var out:Array<StagedFile> = [{src: Path.join([srcRoot, bundleName]), target: installed}];
+
+		// After that swap the old bundle sits at <bundle>.old.bak, so the player's mods can be
+		// moved out of it and into the build that replaced it. Both halves go through the same
+		// journal, so a failure here rolls the bundle swap back too.
+		var displaced:String = installed + BAK_SUFFIX;
+		for (rel in ['Contents/Resources/mods', 'Contents/Resources/modsList.txt'])
+			if (FileSystem.exists(Path.join([installed, rel])))
+				out.push({src: Path.join([displaced, rel]), target: Path.join([installed, rel])});
+
+		return out;
+	}
+	#end
 
 	/**
 	 * Applies staged update files from source to destination, replacing existing files.
@@ -477,6 +689,10 @@ class UpdateInstaller {
 		var pid:Int = 0;
 		untyped __cpp__('{0} = (int)GetCurrentProcessId()', pid);
 		return pid;
+		#elseif cpp
+		var pid:Int = 0;
+		untyped __cpp__('{0} = (int)getpid()', pid);
+		return pid;
 		#else
 		return 0;
 		#end
@@ -489,11 +705,23 @@ class UpdateInstaller {
 	 * @param timeoutMs Maximum time to wait in milliseconds
 	 */
 	static function waitForPidExit(pid:Int, timeoutMs:Int):Void {
-		#if windows
 		if (pid <= 0)
 			return;
+		#if windows
 		untyped __cpp__('void* _h = OpenProcess(0x00100000, 0, (unsigned long){0}); _h ? (WaitForSingleObject(_h, (unsigned long){1}), CloseHandle(_h)) : 0',
 			pid, timeoutMs);
+		#elseif cpp
+		// Polled rather than waited on: the process that staged the update is this one's parent,
+		// so waitpid does not apply to it.
+		var waited:Int = 0;
+		while (waited < timeoutMs) {
+			var alive:Int = 0;
+			untyped __cpp__('{0} = (::kill((pid_t){1}, 0) == 0) ? 1 : 0', alive, pid);
+			if (alive == 0)
+				return;
+			Sys.sleep(0.05);
+			waited += 50;
+		}
 		#end
 	}
 
@@ -522,6 +750,10 @@ class UpdateInstaller {
 		try
 			Sys.command('attrib', ['-R', p])
 		catch (e:Dynamic) {}
+		#else
+		try
+			Sys.command('chmod', ['u+w', p])
+		catch (e:Dynamic) {}
 		#end
 	}
 
@@ -549,6 +781,9 @@ class UpdateInstaller {
 	static function isSkipped(relLow:String):Bool {
 		for (p in SKIP_PREFIXES)
 			if (relLow == p.substr(0, p.length - 1) || relLow.startsWith(p))
+				return true;
+		for (f in SKIP_FILES)
+			if (relLow == f)
 				return true;
 		return false;
 	}
@@ -703,7 +938,7 @@ class UpdateInstaller {
 	 * download and booting the old build without a word.
 	 */
 	public static function applyPendingOnBoot():Void {
-		var root:String = Path.directory(Sys.programPath());
+		var root:String = installRoot();
 		var staging:String = Path.join([root, DIR_STAGING]);
 		if (!FileSystem.exists(Path.join([staging, MARKER_READY])))
 			return;
@@ -737,9 +972,7 @@ class UpdateInstaller {
 		deleteTree(staging);
 		forceDelete(Path.join([root, LOG_FAILURE]));
 
-		try {
-			new sys.io.Process(Sys.programPath(), []);
-		} catch (e:Dynamic) {}
+		spawnSelf();
 		Sys.exit(0);
 	}
 
@@ -777,12 +1010,23 @@ class UpdateInstaller {
 	 * Removes backup files (.old.bak) from previous installations.
 	 */
 	public static function cleanupOnBoot():Void {
-		var root:String = Path.directory(Sys.programPath());
+		var root:String = installRoot();
 		deleteTree(Path.join([root, DIR_TMP]));
 		var staging:String = Path.join([root, DIR_STAGING]);
 		if (FileSystem.exists(staging) && !FileSystem.exists(Path.join([staging, MARKER_READY])))
 			deleteTree(staging);
-		deleteBaks(root);
+
+		var bundle:String = bundlePath();
+		if (bundle != null) {
+			// The install root is whatever folder the bundle sits in -- /Applications, say -- so
+			// only the bundle and the one the last swap displaced are ours to sweep.
+			var displaced:String = bundle + BAK_SUFFIX;
+			if (FileSystem.exists(displaced))
+				deleteTree(displaced);
+			deleteBaks(bundle);
+		} else {
+			deleteBaks(root);
+		}
 	}
 
 	/**
@@ -799,14 +1043,16 @@ class UpdateInstaller {
 				continue;
 			var full:String = Path.join([dir, name]);
 			try {
-				if (FileSystem.isDirectory(full)) {
-					deleteBaks(full);
-				} else if (name.toLowerCase().endsWith(BAK_SUFFIX)) {
+				if (name.toLowerCase().endsWith(BAK_SUFFIX)) {
 					var original:String = full.substr(0, full.length - BAK_SUFFIX.length);
-					if (FileSystem.exists(original))
-						forceDelete(full);
-					else
+					if (!FileSystem.exists(original))
 						moveReplace(full, original);
+					else if (FileSystem.isDirectory(full))
+						deleteTree(full);
+					else
+						forceDelete(full);
+				} else if (FileSystem.isDirectory(full)) {
+					deleteBaks(full);
 				}
 			} catch (e:Dynamic) {}
 		}
