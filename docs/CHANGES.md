@@ -1,48 +1,50 @@
 # Psych 1.0.4 — Clean Fixes Changelog
 
-This branch (**`psych-1.0.4-fixes`**) is [Psych Engine **1.0.4**](https://github.com/ShadowMario/FNF-PsychEngine/commit/5c67ced49e5a98535298a6daa3f8f4ec79ac8399)
+> This file is maintained by AI, all information have been double checked.
+
+This repo is [Psych Engine **1.0.4**](https://github.com/ShadowMario/FNF-PsychEngine/commit/5c67ced49e5a98535298a6daa3f8f4ec79ac8399)
 with haxelib/toolchain updates, bug fixes, and performance work backported from PE Continued,
 plus a few opt-in conveniences: a CPU/GPU/memory FPS counter, video precaching, clang-cl build
-support, and an in-engine **self-updater** (pointed at this Template repo).
-
-It leaves out the fork's larger rewrites — no Note System V2, osu! converter, Android port,
-reworked editors, SmidrUI, or `hscript-insanity`. The goal is a clean, modern-toolchain base
-that people still on stock Psych 1.0.4 can build against and cherry-pick from.
+support, and an in-engine **self-updater** for Windows, Linux and macOS.
 
 Baseline: [`5c67ced`](https://github.com/ShadowMario/FNF-PsychEngine/commit/5c67ced49e5a98535298a6daa3f8f4ec79ac8399)
 ("Update gitVersion.txt", 2025-03-24) — stock Psych Engine 1.0.4.
 
 Reported version: **1.0.6** ([`26d08e4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/26d08e4460bfe6ed246b8720f5af2a2e5c338143)) —
-this branch's own version string, not an upstream Psych release.
+this repo's own version string, not an upstream Psych release.
 
 Every commit below is linked to this repository. Grouped by type, newest-toolchain first.
-
-> **Intentionally kept from stock 1.0.4:** Dot-Stuff `flxanimate` (**not** swapped for
-> MaybeMaru's `flixel-animate`, which regressed atlas offsets). `hxluajit` **does** replace
-> `linc_luajit`, and `hxscript` **does** replace `hscript-iris` (Iris was never swapped for
-> Insanity; it was replaced outright).
 
 ---
 
 ## Libraries / toolchain
 
-| Library              | Stock 1.0.4        | This branch      | Notes                                                              |
-| -------------------- | ------------------ | ---------------- | ------------------------------------------------------------------ |
-| `flixel`             | 5.6.1              | **6.2.0**        | **Major** upgrade                                                  |
-| `flixel-addons`      | 3.2.2              | **4.0.2**        | **Major** upgrade                                                  |
-| `lime`               | (transitive)       | **8.3.2**        |                                                                    |
-| `openfl`             | (transitive)       | **9.5.2**        | Needed a `PsychUIInputText` caret clamp (RangeError)              |
-| `hscript`            | (transitive)       | **2.7.0**        | Now explicitly pinned                                             |
-| `hscript-iris`       | 1.1.3              | **removed**      | Replaced by `hxscript`                                            |
-| `hxscript`           | —                  | **2.0.4 (new)**  | HScript backend; type enforcement off by default                  |
-| `hxvlc`              | 2.0.1              | **2.3.0**        | + `precacheVideo` warming API                                     |
-| `hxdiscord_rpc`      | 1.2.4              | **1.3.0**        |                                                                    |
-| `hxcpp`              | release (system)   | **git `v4.3.152`** | Pinned tag; built from source in setup                          |
-| `hxcpp-debug-server` | (not listed)       | **1.2.4**        | New pin                                                            |
-| `tink_core`          | (transitive)       | **1.26.0**       | New pin                                                            |
-| `flxanimate`         | git (Dot-Stuff)    | git (Dot-Stuff)  | **Kept**                            |
-| `linc_luajit`        | git                | **removed**      | Replaced by `hxluajit` + `hxluajit-wrapper`                       |
-| `hxhardware`         | —                  | **git (new)**    | CPU/GPU/memory metrics for the FPS counter (`HARDWARE_ALLOWED`)   |
+**In use**
+
+| Library              | Stock 1.0.4      | This repo          | Notes                                                           |
+| -------------------- | ---------------- | ------------------ | --------------------------------------------------------------- |
+| `flixel`             | 5.6.1            | **6.2.0**          | **Major** upgrade                                               |
+| `flixel-addons`      | 3.2.2            | **4.0.2**          | **Major** upgrade                                               |
+| `lime`               | (transitive)     | **8.3.2**          |                                                                 |
+| `openfl`             | (transitive)     | **9.5.2**          | Needed a `PsychUIInputText` caret clamp (RangeError)            |
+| `hxscript`           | —                | **2.0.4 (new)**    | HScript backend; type enforcement off by default                |
+| `hscript`            | (transitive)     | **2.7.0**          | Only pulled in for Flixel's debug console and watch window      |
+| `hxluajit`           | —                | **git (new)**      | Lua backend                                                     |
+| `hxluajit-wrapper`   | —                | **git (new)**      | Lua backend                                                     |
+| `hxvlc`              | 2.0.1            | **2.3.0**          | + `precacheVideo` warming API                                   |
+| `hxdiscord_rpc`      | 1.2.4            | **1.3.0**          |                                                                 |
+| `hxcpp`              | release (system) | **git `v4.3.152`** | Pinned tag; built from source in setup                          |
+| `hxcpp-debug-server` | (not listed)     | **1.2.4**          | New pin                                                         |
+| `tink_core`          | (transitive)     | **1.26.0**         | New pin                                                         |
+| `flxanimate`         | git (Dot-Stuff)  | git (Dot-Stuff)    | **Kept**, not swapped for MaybeMaru's `flixel-animate`          |
+| `hxhardware`         | —                | **git (new)**      | CPU/GPU/memory metrics for the FPS counter (`HARDWARE_ALLOWED`) |
+
+**Removed / Replaced**
+
+| Library        | Stock 1.0.4 | Replaced by                     |
+| -------------- | ----------- | ------------------------------- |
+| `hscript-iris` | 1.1.3       | `hxscript`                      |
+| `linc_luajit`  | git         | `hxluajit` + `hxluajit-wrapper` |
 
 ---
 
@@ -58,6 +60,13 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 - [`75a43a1`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/75a43a1c64ea3cefcbb315c5c51c9afdd13d787e) — build: patch funkin.vis for current grig.audio API, build hxcpp tool in setup
 - [`4d9da58`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/4d9da589a713c8835413ecce035692de33c4f349) — Setup/CI: pin hxcpp v4.3.143, bump hxvlc 2.3.0, installGit ref arg, local repo; modernize build workflow
 - [`90dca25`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/90dca2591ddf67fbe568bd0583c8f9a02a353417) — Make the VIDEOS_ALLOWED define not messy (desktop || mobile)
+- [`22e05cc`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/22e05cc2208692ad356abde65ed7750b1341894f) — CI: add release workflow — build desktop release + publish GitHub Release on release-* tags
+- [`bca2743`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/bca2743abdda8535343629f151f76a19740001dd) — CI: take the app version from gitVersion.txt
+- [`db193c9`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/db193c9fe448f5dc0ca80785d6ee0486c205a497) — Setup: bump flixel to 6.2.0 and hxcpp to v4.3.152
+- [`cbdc87d`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cbdc87dcafa0271923cc9cdc6206d773d79051e5) — Setup: bump flixel-addons to 4.0.2
+- [`a2382e9`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/a2382e9fd6b738889e805a7cebb9e28ad922f98d) — Setup: pin hxscript 2.0.1, and settle tink_core on 1.26.0
+- [`aae47c6`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/aae47c68e9bea91f2d5ab914ec1aa2045b2a00b3) — Setup: pin hxscript 2.0.2
+- [`8a3d8ba`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/8a3d8ba833e5aff3a478a9abc1e6669615e9a280) — Setup: pin hxscript 2.0.4
 
 ---
 
@@ -73,16 +82,17 @@ Fixes song-load softlocks in the multithreaded loader (single-task prep, stall w
 
 ## Ported additions (opt-in extras)
 
-Self-contained conveniences that don't touch the gameplay/format/UI internals — a
-CPU/GPU/memory **FPS counter** overlay with its pre-SmidrUI options submenu
-(`hxhardware`/`DebugPrefs`), **video precaching** (hxvlc 2.3.0 `precache()` +
-`VideoSprite` reuse), **clang-cl** Windows build support, and an in-engine
-**self-updater** that checks this repo's GitHub Releases (`backend/updater/`,
-`UpdateState`/`OutdatedState`, replacing the old `OutdatedSubState`):
+Self-contained conveniences that don't touch the gameplay/format/UI internals (FPS counter, video
+precaching, clang-cl build support, self-updater).
 
-- [`9b269f5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/9b269f5e838e81a7a69fe6a644f072c232e37987) — FPS Counter: CPU/GPU/memory performance overlay + FPS Counter Settings submenu (hxhardware, DebugPrefs, pre-SmidrUI options)
+- [`9b269f5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/9b269f5e838e81a7a69fe6a644f072c232e37987) — FPS Counter: CPU/GPU/memory performance overlay + FPS Counter Settings submenu (hxhardware, DebugPrefs)
 - [`dd035d6`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/dd035d6991e9e548d7488784d8c9e16f08552bed) — Video: hxvlc 2.3.0 precache + VideoSprite reuse (precacheVideo warming/adoption)
 - [`3d05358`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/3d053580edd7cdffadcb6564368fbbe9eb007637) — Support building with clang on Windows
+- [`3ebcc60`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/3ebcc6042e474a9c2222ca20359ef8d360800c65) — Add self-updating functionality
+- [`483d4ad`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/483d4ad849737798cf877a3d1ad21ad876498292) — Updater: point self-update checks at FNF-PsychEngine-Template
+- [`537287d`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/537287d91c1123134e4032e9b608d20ccf350f6b) — Updater: gate CHECK_FOR_UPDATES to desktop release builds (officialBuild was never defined, so the updater never compiled in)
+- [`f142fca`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/f142fca8a2cc1f37fd381ea8737386f22b3b2141) — Updater: install the whole build or none of it, and say so when it fails
+- [`edb15e5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/edb15e50bc8ee38e022200bc00b8a637cf9bd620) — Updater: install on Linux and macOS too
 
 ---
 
@@ -108,6 +118,8 @@ CPU/GPU/memory **FPS counter** overlay with its pre-SmidrUI options submenu
 - [`729a660`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/729a6603bb04b5310b1b98078d99c4e7fe09c8fa) — Perf: Controls input checks cache binds and dodge iterator allocations
 - [`170b074`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/170b0749875d01b08f5b23c17babbc18c4c46e37) — Perf: MusicBeatState only writes save.fullscreen on change, inline stepHit loop
 - [`f0f5c14`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/f0f5c14b454226d4e88832cf36a45adfc96e2691) — Perf: Language.formatKey hoists regex to static
+- [`cb7d045`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cb7d0452929e5bafba0cdd97fb8784e6195ecc0d) — Paths/Alphabet: reuse parsed atlases instead of re-reading the description (perf)
+- [`00f48a7`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/00f48a7c4e6f04dc1ec55ef5cf2a5e09c4dc2d6c) — CoolUtil: parse JSON with haxe.Json, falling back to TJSON (perf; base callers only)
 
 ---
 
@@ -231,6 +243,19 @@ CPU/GPU/memory **FPS counter** overlay with its pre-SmidrUI options submenu
 - [`9cefe12`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/9cefe123cfcdd193a645b7d6680e33f9dbd162e0) — CustomFadeTransition: time-based FPS-independent sweep + faster
 - [`23ddab4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/23ddab45f91868b33435a97ccd191791a1b48e54) — Main: Keep fixedTimestep disabled across game resets
 - [`a13e0c6`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/a13e0c6ee52d113dd62bfe5c0a9b9efd4af53705) — Bump version, Project.xml cleanup and remove the officialBuild gate.
+- [`cf10308`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cf103083c97029475552baadd9efa1192318ef52) — StageData/LoadingState: Std.int-coerce preload filter bitmask (hxcpp Dynamic->Int miscompile could zero it and skip preloads)
+- [`460d3d3`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/460d3d391aa725f559029a3d50da542be604dc89) — HealthIcon: default to CPU caching, not GPU
+- [`d4519b0`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/d4519b03186f9d026d4a732cf6ea39597c56e19f) — DialogueBox: turn antialiasing off on the week 6 pixel sprites
+- [`cf91d2b`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cf91d2b0a163899b6e8429da5b6aa7a8867a97d5) — ChartingState: fix copy/paste offsets, hold note editing and section lookups
+- [`5b5764c`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/5b5764c309ef5855854a5eef6d95b96c3ce94c1e) — HScript: run on hxscript, with type enforcement off by default
+- [`60fa641`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/60fa6417408c0e61a01ff9698ddc811a5151b789) — ChartingState: stop Ctrl + A and Ctrl + S from also navigating
+- [`19779a5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/19779a52cefe986e437ee6fac24d281dcfc62bfc) — ChartingState: keep the note selection when clicking the UI boxes
+- [`5ddcd97`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/5ddcd97ed6430b6b05b06c58c208ac4bd9f9ab3a) — Character: type animOffsets as Float pairs + clamp negative shoot frame index
+- [`8b015b4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/8b015b481e909f14a856fd80d4ce97bf17c63bc7) — StageData: guard missing stage-sprite scroll/color fields
+- [`4ef752b`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/4ef752bf364e50910faa4fe911e303585253dbc8) — Conductor: skip judgement tiers with an unset hit window
+- [`0966be7`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/0966be735c2dff68ba090153e2781a49d424fbd9) — GameplayChangersSubstate: store the resolved option default and type the options array
+- [`ec3c9e4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/ec3c9e49d69dd316ec8333d8df658d9373e84f5a) — DialogueBoxPsych: only stop the music this dialogue started
+- [`6d10c64`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/6d10c64377711d9a1b79178c4c6f919eee6ae240) — PlayState: fire pending events on generate (was an inverted guard)
 
 ---
 
@@ -245,52 +270,15 @@ Repacked base-game/shared spritesheets (smaller atlases; frame names preserved).
 
 ---
 
-## Branch-specific fixes (new — not present upstream or on the fork's master)
+## Documentation
 
-- [`cf10308`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cf103083c97029475552baadd9efa1192318ef52) — StageData/LoadingState: Std.int-coerce preload filter bitmask (hxcpp Dynamic->Int miscompile could zero it and skip preloads)
-- [`460d3d3`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/460d3d391aa725f559029a3d50da542be604dc89) — HealthIcon: default to CPU caching, not GPU
-- [`d4519b0`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/d4519b03186f9d026d4a732cf6ea39597c56e19f) — DialogueBox: turn antialiasing off on the week 6 pixel sprites
-- [`cf91d2b`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cf91d2b0a163899b6e8429da5b6aa7a8867a97d5) — ChartingState: fix copy/paste offsets, hold note editing and section lookups
-- [`5b5764c`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/5b5764c309ef5855854a5eef6d95b96c3ce94c1e) — HScript: run on hxscript, with type enforcement off by default
+Commits that only touch the docs. A commit cannot carry its own hash, so whichever one writes
+this section is listed by the next.
 
-- **Preload filter bitmask** now coerced with `Std.int` — stock code read the byte-based
-  filter straight off `Dynamic`, which miscompiles on hxcpp and could zero the mask, silently
-  skipping stage preloads.
-- **Health icons default to CPU caching** — GPU-cached bitmaps null their CPU image, and openfl
-  9.5.2's `getTexture` can't re-upload after a texture invalidation, blanking the persistent
-  health icons. Icons are tiny, so CPU residency is free.
-- **Week 6 dialogue is crisp again** — `Main` sets `FlxSprite.defaultAntialiasing` from the
-  antialiasing pref, so every sprite made without an explicit value inherits it. The week 6
-  dialogue never set one (unlike the School/SchoolEvil stages, which turn it off on every pixel
-  sprite), leaving the box, portraits, spirit face and hand cursor blurry.
-- **HScript runs on `hxscript`** — `hscript-iris` is gone. `HScript` owns an interpreter instead
-  of being one, so the surface the engine calls is unchanged and no mod script has to be rewritten.
-  hscript parsed type annotations and ignored them, hxscript enforces them, so the build defines
-  `hxscript_dynamic` unless `HXSCRIPT_TYPED` is set in `Project.xml` — annotations stay ignored by
-  default and an existing mod behaves as before. `HScript.typedMode` flips it at runtime. Script
-  errors now report `file:line:column`, the offending source line with a caret under it, a hint,
-  and the call stack across script functions and back into the engine, rather than a bare message.
-- **Chart editor copy/paste, hold notes and section lookups** — Ctrl + C stored clipboard times
-  relative to the earliest selected note instead of the section start, so pastes only landed
-  correctly in section 0. The Sustain stepper desynced from the Q/E keys, capped holds at half of
-  `MetaNote`'s real limit, kept its negative lower bound after a multi-selection, skipped the wrong
-  entries in `onValueChange`, and responded to Q/E while a text field had focus. Three section
-  lookups counted one section too many — harmless under constant BPM, but wrong across BPM changes
-  and out of bounds in the last section — and `copyNotesOnSection` had a dead statement plus an
-  unchecked section offset.
-
----
-
-## Backported from master (later perf & bug fixes)
-
-Base-applicable fixes cherry-picked from the fork's newer `master` commits (feature-coupled
-ones — note-V2, osu!, mobile, psych_v2, reworked editors — were left out):
-
-- [`5ddcd97`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/5ddcd97ed6430b6b05b06c58c208ac4bd9f9ab3a) — Character: type animOffsets as Float pairs + clamp negative shoot frame index
-- [`8b015b4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/8b015b481e909f14a856fd80d4ce97bf17c63bc7) — StageData: guard missing stage-sprite scroll/color fields
-- [`4ef752b`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/4ef752bf364e50910faa4fe911e303585253dbc8) — Conductor: skip judgement tiers with an unset hit window
-- [`0966be7`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/0966be735c2dff68ba090153e2781a49d424fbd9) — GameplayChangersSubstate: store the resolved option default and type the options array
-- [`ec3c9e4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/ec3c9e49d69dd316ec8333d8df658d9373e84f5a) — DialogueBoxPsych: only stop the music this dialogue started
-- [`6d10c64`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/6d10c64377711d9a1b79178c4c6f919eee6ae240) — PlayState: fire pending events on generate (was an inverted guard)
-- [`cb7d045`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/cb7d0452929e5bafba0cdd97fb8784e6195ecc0d) — Paths/Alphabet: reuse parsed atlases instead of re-reading the description (perf)
-- [`00f48a7`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/00f48a7c4e6f04dc1ec55ef5cf2a5e09c4dc2d6c) — CoolUtil: parse JSON with haxe.Json, falling back to TJSON (perf; base callers only)
+- [`981247f`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/981247f4f6729add874ee70c13faa34ac08e588b) — Docs: add commit-linked CHANGES.md for the 1.0.4 clean-fixes branch + README section
+- [`4e2d984`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/4e2d9848dd77f1939ad4ce8f3bf4b603a4e3e536) — Docs: log the master backports in CHANGES.md
+- [`e11e6af`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/e11e6af87fc6e5237978008f80ef988346e79c06) — Document the updater
+- [`a0b536e`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/a0b536ecbaef157e113e3a2c0450952c13239f6b) — Docs: document the self-updater backport + opt-in extras in CHANGES/README
+- [`db178b5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/db178b5871d9209976d400387898e15a8ccb3bed) — Docs: Migration guide
+- [`9691427`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/9691427614376e09744f1eb5eb54b665721c13e2) — Docs: log the 1.0.6 fixes and point CHANGES.md links at this repo
+- [`97e04a0`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/97e04a0dcd9cf20f0459bfbd28f4dc6836901ba3) — Docs: log the hxscript swap in CHANGES.md
