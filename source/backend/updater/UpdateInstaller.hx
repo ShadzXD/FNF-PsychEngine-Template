@@ -18,6 +18,8 @@ import openfl.events.SecurityErrorEvent;
 
 using StringTools;
 
+typedef StagedFile = {src:String, target:String};
+
 #if (windows && cpp)
 @:cppFileCode('extern "C" __declspec(dllimport) int __stdcall MoveFileExW(const wchar_t*, const wchar_t*, unsigned long);
 extern "C" __declspec(dllimport) unsigned long __stdcall GetLastError(void);
@@ -37,6 +39,9 @@ class UpdateInstaller {
 	public static var BAK_SUFFIX:String = '.old.bak';
 	static var MARKER_READY:String = '.ready'; // written into staging once extraction succeeds
 	static var MARKER_PID:String = '.parent_pid'; // PID of the session that staged the update
+	static var MARKER_TRIES:String = '.attempts'; // how many boots have tried to install this staging
+	static var LOG_FAILURE:String = 'update_error.txt'; // written next to the exe when an install is abandoned
+	static var MAX_APPLY_TRIES:Int = 3;
 
 	static var SKIP_PREFIXES:Array<String> = ['mods/', 'update_tmp/', 'update_staging/'];
 
@@ -225,8 +230,12 @@ class UpdateInstaller {
 
 				setPhase('extracting');
 				log('Extracting...');
-				extractZip(zipBytes, stageDir);
-				zipBytes = null; // free the in-memory archive
+				ensureDir(tmpDir);
+				var localZip:String = Path.join([tmpDir, Path.withoutDirectory(info.zipName)]);
+				File.saveBytes(localZip, zipBytes);
+				zipBytes = null; // the archive lives on disk now -- don't hold a second copy in memory
+				extractZip(localZip, stageDir);
+				forceDelete(localZip);
 
 				if (!isWritable(root)) {
 					log('Install folder is not writable (admin/Program Files?).');
@@ -252,12 +261,25 @@ class UpdateInstaller {
 	}
 
 	/**
-	 * Extracts a ZIP file to the destination directory.
-	 * @param bytes The ZIP file contents
+	 * Extracts a ZIP file to the destination directory, reading it back from disk and releasing
+	 * each entry once it lands, so a multi-hundred-megabyte build is never held in memory
+	 * compressed and uncompressed at the same time.
+	 * @param zipPath The path of the downloaded archive
 	 * @param dest The destination directory path
 	 */
-	function extractZip(bytes:Bytes, dest:String):Void {
-		var entries = haxe.zip.Reader.readZip(new haxe.io.BytesInput(bytes));
+	function extractZip(zipPath:String, dest:String):Void {
+		var input:sys.io.FileInput = File.read(zipPath, true);
+		var entries:haxe.ds.List<haxe.zip.Entry> = null;
+		try {
+			entries = haxe.zip.Reader.readZip(input);
+			input.close();
+		} catch (e:Dynamic) {
+			try
+				input.close()
+			catch (e2:Dynamic) {}
+			throw e;
+		}
+
 		for (entry in entries) {
 			if (entry.fileName == null || entry.fileName.endsWith('/'))
 				continue;
@@ -265,72 +287,136 @@ class UpdateInstaller {
 			var outPath:String = Path.join([dest, rel]);
 			ensureDir(Path.directory(outPath));
 			File.saveBytes(outPath, haxe.zip.Reader.unzip(entry));
+			entry.data = null;
 		}
 	}
 
 	/**
 	 * Determines the effective build root directory, unwrapping single-directory zips.
+	 * The staging markers are written after extraction, so counting them made a wrapped build
+	 * look like three entries and the wrapper was never unwrapped -- every file, the executable
+	 * included, then got installed one folder too deep.
 	 * @param dir The directory to check
 	 * @return The build root directory path
 	 */
 	static function effectiveBuildRoot(dir:String):String {
-		var items:Array<String> = FileSystem.readDirectory(dir);
-		if (items.length == 1) {
-			var only:String = Path.join([dir, items[0]]);
-			if (FileSystem.isDirectory(only))
-				return only;
+		var cur:String = dir;
+		var depth:Int = 0;
+		while (depth++ < 3) {
+			var items:Array<String> = [];
+			for (name in FileSystem.readDirectory(cur))
+				if (name != MARKER_READY && name != MARKER_PID && name != MARKER_TRIES)
+					items.push(name);
+
+			if (items.length != 1)
+				break;
+
+			var only:String = Path.join([cur, items[0]]);
+			if (!FileSystem.isDirectory(only))
+				break;
+			cur = only;
 		}
-		return dir;
+		return cur;
 	}
 
 	/**
-	 * Applies staged update files from source to destination, replacing existing files.
+	 * Collects every staged file that should be installed, as source/target pairs.
 	 * @param srcRoot The staged update source directory
 	 * @param dstRoot The destination root directory
-	 * @return The number of files replaced
+	 * @return The files to install, in walk order
 	 */
-	static function applyStaged(srcRoot:String, dstRoot:String):Int {
-		var count:Int = 0;
+	static function collectStaged(srcRoot:String, dstRoot:String):Array<StagedFile> {
+		var out:Array<StagedFile> = [];
 		function walk(dir:String) {
 			for (name in FileSystem.readDirectory(dir)) {
-				if (name == MARKER_READY || name == MARKER_PID)
+				if (name == MARKER_READY || name == MARKER_PID || name == MARKER_TRIES)
 					continue;
 				var full:String = Path.join([dir, name]);
 				var rel:String = relativeTo(srcRoot, full).split('\\').join('/');
 				var relLow:String = rel.toLowerCase();
 				if (relLow.endsWith(BAK_SUFFIX) || isSkipped(relLow))
 					continue;
-				if (FileSystem.isDirectory(full)) {
+				if (FileSystem.isDirectory(full))
 					walk(full);
-				} else {
-					replaceFile(full, Path.join([dstRoot, rel]));
-					count++;
-				}
+				else
+					out.push({src: full, target: Path.join([dstRoot, rel])});
 			}
 		}
 		walk(srcRoot);
-		return count;
+		return out;
+	}
+
+	/**
+	 * Applies staged update files from source to destination, replacing existing files.
+	 * The install is all-or-nothing: a file that cannot be swapped rolls every earlier file back,
+	 * so one locked DLL can no longer abort the walk part-way and leave the build carrying new
+	 * assets and the old executable -- which sorts last in the walk and was therefore the file
+	 * most likely to be missed.
+	 * @param srcRoot The staged update source directory
+	 * @param dstRoot The destination root directory
+	 * @return The number of files replaced
+	 */
+	static function applyStaged(srcRoot:String, dstRoot:String):Int {
+		var files:Array<StagedFile> = collectStaged(srcRoot, dstRoot);
+		var done:Array<StagedFile> = [];
+		for (f in files) {
+			try {
+				replaceFile(f.src, f.target);
+			} catch (e:Dynamic) {
+				rollback(done);
+				throw e;
+			}
+			done.push(f);
+		}
+		return done.length;
+	}
+
+	/**
+	 * Undoes an interrupted install: returns each file already placed back to the staging folder
+	 * and restores the backup it displaced, leaving the running build exactly as it was.
+	 * @param done The files installed so far, in the order they were installed
+	 */
+	static function rollback(done:Array<StagedFile>):Void {
+		var i:Int = done.length;
+		while (i-- > 0) {
+			var f:StagedFile = done[i];
+			var bak:String = f.target + BAK_SUFFIX;
+			try {
+				if (FileSystem.exists(f.target))
+					moveReplace(f.target, f.src);
+				if (FileSystem.exists(bak))
+					moveReplace(bak, f.target);
+			} catch (e:Dynamic) {}
+		}
 	}
 
 	/**
 	 * Replaces a target file with a source file, creating a backup with .old.bak extension.
+	 * If the replacement cannot be put in place the backup is moved back first, so a failure
+	 * never leaves the target missing altogether.
 	 * @param src The source file to copy from
 	 * @param target The target file to replace
 	 */
 	static function replaceFile(src:String, target:String):Void {
 		ensureDir(Path.directory(target));
 		var bak:String = target + BAK_SUFFIX;
+		var movedAside:Bool = false;
 		if (FileSystem.exists(target)) {
 			if (!moveWithRetry(target, bak)) {
 				clearReadOnly(target);
 				if (!moveWithRetry(target, bak))
 					throw 'Could not move "$target" aside (Windows error $lastWinErr). It may be locked by another program or antivirus.';
 			}
+			movedAside = true;
 		}
 		if (!moveWithRetry(src, target)) {
 			clearReadOnly(src);
-			if (!moveWithRetry(src, target))
-				throw 'Could not install "$target" (Windows error $lastWinErr).';
+			if (!moveWithRetry(src, target)) {
+				var err:Int = lastWinErr;
+				if (movedAside)
+					moveReplace(bak, target);
+				throw 'Could not install "$target" (Windows error $err).';
+			}
 		}
 	}
 
@@ -361,8 +447,10 @@ class UpdateInstaller {
 	}
 
 	/**
-	 * Retries file move operation with backoff for sharing violations.
-	 * Retries up to 25 times with 0.2s sleep between attempts for ERROR_SHARING_VIOLATION (32).
+	 * Retries file move operation with backoff while the file is still held by something else.
+	 * Retries up to 40 times with 0.25s sleep between attempts for ERROR_SHARING_VIOLATION (32)
+	 * and ERROR_ACCESS_DENIED (5) -- the latter is what a virus scanner reports while it still
+	 * has a freshly written file open.
 	 * @param src The source file path
 	 * @param dst The destination file path
 	 * @return True if the move succeeded
@@ -372,10 +460,10 @@ class UpdateInstaller {
 		while (true) {
 			if (moveReplace(src, dst))
 				return true;
-			if (lastWinErr != 32 || tries >= 25) // 32 = ERROR_SHARING_VIOLATION
+			if ((lastWinErr != 32 && lastWinErr != 5) || tries >= 40)
 				return false;
 			tries++;
-			#if sys Sys.sleep(0.2); #end
+			#if sys Sys.sleep(0.25); #end
 		}
 	}
 
@@ -610,12 +698,26 @@ class UpdateInstaller {
 	/**
 	 * Applies any pending staged update on application startup.
 	 * Waits for the previous process to exit, applies files, and relaunches the application.
+	 * A failed install keeps the staging so the next boot retries it, up to MAX_APPLY_TRIES, and
+	 * writes what went wrong to update_error.txt beside the executable instead of discarding the
+	 * download and booting the old build without a word.
 	 */
 	public static function applyPendingOnBoot():Void {
 		var root:String = Path.directory(Sys.programPath());
 		var staging:String = Path.join([root, DIR_STAGING]);
 		if (!FileSystem.exists(Path.join([staging, MARKER_READY])))
 			return;
+
+		var tries:Int = readTries(staging) + 1;
+		if (tries > MAX_APPLY_TRIES) {
+			writeFailureLog(root,
+				'Gave up after $MAX_APPLY_TRIES attempts to install the staged update. The download has been discarded -- please update manually.');
+			deleteTree(staging);
+			return;
+		}
+		try
+			File.saveContent(Path.join([staging, MARKER_TRIES]), Std.string(tries))
+		catch (e:Dynamic) {}
 
 		try {
 			var pidFile:String = Path.join([staging, MARKER_PID]);
@@ -625,20 +727,49 @@ class UpdateInstaller {
 					waitForPidExit(pid, 20000);
 			}
 
-			var buildRoot:String = effectiveBuildRoot(staging);
-			applyStaged(buildRoot, root);
-			deleteTree(staging);
+			applyStaged(effectiveBuildRoot(staging), root);
 		} catch (e:Dynamic) {
-			try
-				deleteTree(staging)
-			catch (e2:Dynamic) {}
+			writeFailureLog(root, Std.string(e));
 			return;
 		}
+
+		forceDelete(Path.join([staging, MARKER_READY])); // drop the marker first: a half-deleted staging must not re-apply
+		deleteTree(staging);
+		forceDelete(Path.join([root, LOG_FAILURE]));
 
 		try {
 			new sys.io.Process(Sys.programPath(), []);
 		} catch (e:Dynamic) {}
 		Sys.exit(0);
+	}
+
+	/**
+	 * Reads how many boots have already tried to install the staged update.
+	 * @param staging The staging directory path
+	 * @return The recorded attempt count, or 0 when there is none
+	 */
+	static function readTries(staging:String):Int {
+		try {
+			var f:String = Path.join([staging, MARKER_TRIES]);
+			if (FileSystem.exists(f)) {
+				var n:Null<Int> = Std.parseInt(File.getContent(f).trim());
+				if (n != null)
+					return n;
+			}
+		} catch (e:Dynamic) {}
+		return 0;
+	}
+
+	/**
+	 * Records why an install was abandoned, beside the executable, so the failure is visible
+	 * instead of the game quietly booting on the old build.
+	 * @param root The install root directory
+	 * @param msg The failure message
+	 */
+	static function writeFailureLog(root:String, msg:String):Void {
+		try
+			File.saveContent(Path.join([root, LOG_FAILURE]), 'The staged update could not be installed.\n\n$msg\n')
+		catch (e:Dynamic) {}
 	}
 
 	/**
@@ -656,6 +787,8 @@ class UpdateInstaller {
 
 	/**
 	 * Recursively deletes backup files (.old.bak) from a directory tree.
+	 * A backup whose original is missing is put back instead of deleted -- an install that failed
+	 * and could not fully roll itself back leaves those behind, and they are the only copy.
 	 * @param dir The directory to clean
 	 */
 	static function deleteBaks(dir:String):Void {
@@ -666,10 +799,15 @@ class UpdateInstaller {
 				continue;
 			var full:String = Path.join([dir, name]);
 			try {
-				if (FileSystem.isDirectory(full))
+				if (FileSystem.isDirectory(full)) {
 					deleteBaks(full);
-				else if (name.toLowerCase().endsWith(BAK_SUFFIX))
-					forceDelete(full);
+				} else if (name.toLowerCase().endsWith(BAK_SUFFIX)) {
+					var original:String = full.substr(0, full.length - BAK_SUFFIX.length);
+					if (FileSystem.exists(original))
+						forceDelete(full);
+					else
+						moveReplace(full, original);
+				}
 			} catch (e:Dynamic) {}
 		}
 	}
