@@ -10,7 +10,7 @@ counter, video precaching, clang-cl build support, and an **in-engine self-updat
 Windows, Linux and macOS that pulls from this repo's GitHub Releases. A clean base for anyone
 making forks or still on 1.0.4 who wants a more stable and faster experience.
 
-So this can be considered Psych Engine 1.0.6 basically and that's what the engine will report itself as.
+So this can be considered Psych Engine 1.0.7 basically and that's what the engine will report itself as.
 
 See **[docs/CHANGES.md](docs/CHANGES.md)** for the full, commit-linked list of everything
 changed versus stock 1.0.4, and **[docs/SCRIPT_MIGRATION.md](docs/SCRIPT_MIGRATION.md)** for how

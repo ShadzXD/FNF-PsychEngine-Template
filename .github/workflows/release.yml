@@ -1,6 +1,6 @@
 # Builds the desktop release binaries and publishes them as a GitHub Release.
 #
-# Trigger: push a tag like `release-1.0.6`. The in-engine self-updater's Stable
+# Trigger: push a tag like `release-1.0.7`. The in-engine self-updater's Stable
 # channel looks for exactly these tags on this repo (non-prerelease, `release-`
 # prefix, SemVer higher than the running build), so the tag name IS the version
 # users update to. Bump `MainMenuState.psychEngineVersion` before tagging.

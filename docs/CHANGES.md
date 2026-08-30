@@ -10,8 +10,7 @@ support, and an in-engine **self-updater** for Windows, Linux and macOS.
 Baseline: [`5c67ced`](https://github.com/ShadowMario/FNF-PsychEngine/commit/5c67ced49e5a98535298a6daa3f8f4ec79ac8399)
 ("Update gitVersion.txt", 2025-03-24) — stock Psych Engine 1.0.4.
 
-Reported version: **1.0.6** ([`26d08e4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/26d08e4460bfe6ed246b8720f5af2a2e5c338143)) —
-this repo's own version string, not an upstream Psych release.
+Reported version: **1.0.7** — this repo's own version string, not an upstream Psych release.
 
 Every commit below is linked to this repository. Grouped by type, newest-toolchain first.
 
@@ -67,6 +66,7 @@ Every commit below is linked to this repository. Grouped by type, newest-toolcha
 - [`a2382e9`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/a2382e9fd6b738889e805a7cebb9e28ad922f98d) — Setup: pin hxscript 2.0.1, and settle tink_core on 1.26.0
 - [`aae47c6`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/aae47c68e9bea91f2d5ab914ec1aa2045b2a00b3) — Setup: pin hxscript 2.0.2
 - [`8a3d8ba`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/8a3d8ba833e5aff3a478a9abc1e6669615e9a280) — Setup: pin hxscript 2.0.4
+- [`26d08e4`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/26d08e4460bfe6ed246b8720f5af2a2e5c338143) — Bump version to 1.0.6
 
 ---
 
@@ -282,3 +282,4 @@ this section is listed by the next.
 - [`db178b5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/db178b5871d9209976d400387898e15a8ccb3bed) — Docs: Migration guide
 - [`9691427`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/9691427614376e09744f1eb5eb54b665721c13e2) — Docs: log the 1.0.6 fixes and point CHANGES.md links at this repo
 - [`97e04a0`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/97e04a0dcd9cf20f0459bfbd28f4dc6836901ba3) — Docs: log the hxscript swap in CHANGES.md
+- [`004b5f5`](https://github.com/MeguminBOT/FNF-PsychEngine-Template/commit/004b5f557dc9dfa4795945dfa922f6d40afc3a55) — Docs: record this repo's fixes, link every commit, and group by type
