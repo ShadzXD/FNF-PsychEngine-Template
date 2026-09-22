@@ -73,10 +73,23 @@ class Main extends Sprite {
 		#elseif ios
 		Sys.setCwd(lime.system.System.applicationStorageDirectory);
 		#end
+		if (stage != null)
+		{
+			init();
+		}
+		else
+		{
+			addEventListener(Event.ADDED_TO_STAGE, init);
+		}
 		#if VIDEOS_ALLOWED
 		hxvlc.util.Handle.init(#if (hxvlc >= "1.8.0") ['--no-lua'] #end);
 		#end
-
+	}
+	
+	private function setupGame():Void
+	{
+		var stageWidth:Int = Lib.current.stage.stageWidth;
+		var stageHeight:Int = Lib.current.stage.stageHeight;
 		#if LUA_ALLOWED
 		Mods.pushGlobalMods();
 		#end
@@ -197,7 +210,15 @@ class Main extends Sprite {
 				resetSpriteCache(FlxG.game);
 		});
 	}
+	private function init(?E:Event):Void
+	{
+		if (hasEventListener(Event.ADDED_TO_STAGE))
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+		}
 
+		setupGame();
+	}
 	static function resetSpriteCache(sprite:Sprite):Void {
 		@:privateAccess {
 			sprite.__cacheBitmap = null;
@@ -229,11 +250,6 @@ class Main extends Sprite {
 		}
 
 		errMsg += "\nUncaught Error: " + e.error;
-		// remove if you're modding and want the crash log message to contain the link
-		// please remember to actually modify the link for the github page to report the issues to.
-		#if officialBuild
-		errMsg += "\nPlease report this error to the GitHub page: https://github.com/ShadowMario/FNF-PsychEngine";
-		#end
 		errMsg += "\n\n> Crash Handler written by: sqirra-rng";
 
 		if (!FileSystem.exists("./crash/"))

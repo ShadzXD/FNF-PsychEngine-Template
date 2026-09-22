@@ -40,7 +40,9 @@
 			"name": "funkin.vis",
 			"type": "git",
 			"dir": null,
-			"url": "https://github.com/FunkinCrew/funkVis"
+			"url": "https://github.com/FunkinCrew/funkVis",
+			"ref": "22b1ce089dd924f15cdc4632397ef3504d464e90"
+
 		},
 		{
 			"name": "grig.audio",
