@@ -1,7 +1,6 @@
 package objects.notes;
 
 class StrumLine extends FlxTypedGroup<StrumNote> {
-	public var downScroll:Bool;
 	public var playable:Bool = false;
 
 	/**
@@ -10,7 +9,7 @@ class StrumLine extends FlxTypedGroup<StrumNote> {
 	 */
 	public var cpuControlled:Bool = false;
 
-	public var forceDownscroll:Bool;
+	public var downScroll:Bool;
 
 	// keeping this here just in case i end up adding multi key (prob not)
 	public final strumCount:Int = 4;
@@ -23,6 +22,8 @@ class StrumLine extends FlxTypedGroup<StrumNote> {
 	public var allowStrumlineUnderlay:Bool = false;
 
 	public var introAnimation:Bool = true;
+
+	public var characters:Array<Character>;
 
 	public function new(x:Float, y:Float, player:Int, downScroll:Bool) {
 		super();
@@ -44,7 +45,7 @@ class StrumLine extends FlxTypedGroup<StrumNote> {
 		}
 	}
 
-	public function strumPlayAnim(id:Int, time:Float) {
+	public function strumPlayConfirm(id:Int, time:Float) {
 		var spr:StrumNote = null;
 		spr = this.members[id];
 

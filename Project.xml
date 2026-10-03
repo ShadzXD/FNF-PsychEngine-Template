@@ -130,6 +130,7 @@
 	<haxelib name="hxhardware" if="HARDWARE_ALLOWED"/>
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED"/>
 	<haxelib name="flixel-animate"/>
+	<haxelib name="funkin-modchart" />
 
 	<!-- Disable Discord IO Thread -->
 	<haxedef name="DISCORD_DISABLE_IO_THREAD" if="hxdiscord_rpc" />
@@ -195,6 +196,10 @@
 	<haxeflag name="--macro" value="include('my.pack')" />
 
 	<haxedef name="hxscript_dynamic" if="HSCRIPT_ALLOWED" unless="HXSCRIPT_TYPED" />
+
+	<haxedef name="FM_ENGINE" value="PSYCH"/>
+	<haxedef name="FM_ENGINE_VERSION" value="1.0"/>
+	<haxeflag name="--macro" value="modchart.backend.macros.Macro.includeFiles()"/>
 
 	<!-- _________________________________ Custom _______________________________ -->
 

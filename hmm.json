@@ -1,122 +1,128 @@
 {
-	"dependencies": [
-		{
-			"name": "lime",
-			"type": "haxelib",
-			"version": "8.3.2",
-			"dir": null
-		},
-		{
-			"name": "openfl",
-			"type": "haxelib",
-			"version": "9.5.2",
-			"dir": null
-		},
-		{
-			"name": "flixel",
-			"type": "haxelib",
-			"version": "6.2.0",
-			"dir": null
-		},
-		{
-			"name": "flixel-addons",
-			"type": "haxelib",
-			"version": "4.0.2",
-			"dir": null
-		},
-		{
-			"name": "flixel-tools",
-			"type": "haxelib",
-			"version": "1.5.1",
-			"dir": null
-		},
-		{
-			"name": "flixel-animate",
-			"type": "git",
-			"dir": null,
-			"url": "https://github.com/MaybeMaru/flixel-animate",
-			"ref": "dcaa33ca8845f23d7c4c441025cecaacc91b0eff"
-		},
-		{
-			"name": "funkin.vis",
-			"type": "git",
-			"dir": null,
-			"url": "https://github.com/FunkinCrew/funkVis",
-			"ref": "22b1ce089dd924f15cdc4632397ef3504d464e90"
-
-		},
-		{
-			"name": "grig.audio",
-			"type": "git",
-			"dir": null,
-			"url": "https://gitlab.com/haxe-grig/grig.audio"
-		},
-		{
-			"name": "hxscript",
-			"type": "haxelib",
-			"version": "2.0.4",
-			"dir": null
-		},
-		{
-			"name": "hscript",
-			"type": "haxelib",
-			"version": "2.7.0",
-			"dir": null
-		},
-		{
-			"name": "hxcpp-debug-server",
-			"type": "haxelib",
-			"version": "1.2.4",
-			"dir": null
-		},
-		{
-			"name": "hxcpp",
-			"type": "git",
-			"dir": null,
-			"ref": "v4.3.152",
-			"url": "https://github.com/HaxeFoundation/hxcpp"
-		},
-		{
-			"name": "hxdiscord_rpc",
-			"type": "haxelib",
-			"version": "1.3.0",
-			"dir": null
-		},
-		{
-			"name": "hxvlc",
-			"type": "haxelib",
-			"version": "2.3.1",
-			"dir": null
-		},
-		{
-			"name": "hxluajit",
-			"type": "git",
-			"dir": null,
-			"url": "https://github.com/MAJigsaw77/hxluajit"
-		},
-		{
-			"name": "hxluajit-wrapper",
-			"type": "git",
-			"dir": null,
-			"url": "https://github.com/MAJigsaw77/hxluajit-wrapper"
-		},
-		{
-			"name": "hxhardware",
-			"type": "git",
-			"dir": null,
-			"url": "https://github.com/Vortex2Oblivion/hxhardware"
-		},
-		{
-			"name": "tink_core",
-			"type": "haxelib",
-			"version": "1.26.0",
-			"dir": null
-		},
-		{
-			"name": "tjson",
-			"type": "haxelib",
-			"version": "1.4.0",
-			"dir": null
-		}
-	]
+    "dependencies": [
+        {
+            "name": "lime",
+            "type": "haxelib",
+            "version": "8.3.2",
+            "dir": null
+        },
+        {
+            "name": "openfl",
+            "type": "haxelib",
+            "version": "9.5.2",
+            "dir": null
+        },
+        {
+            "name": "flixel",
+            "type": "haxelib",
+            "version": "6.2.0",
+            "dir": null
+        },
+        {
+            "name": "flixel-addons",
+            "type": "haxelib",
+            "version": "4.0.2",
+            "dir": null
+        },
+        {
+            "name": "flixel-tools",
+            "type": "haxelib",
+            "version": "1.5.1",
+            "dir": null
+        },
+        {
+            "name": "flixel-animate",
+            "type": "git",
+            "dir": null,
+            "url": "https://github.com/MaybeMaru/flixel-animate",
+            "ref": "dcaa33ca8845f23d7c4c441025cecaacc91b0eff"
+        },
+        {
+            "name": "funkin.vis",
+            "type": "git",
+            "dir": null,
+            "url": "https://github.com/FunkinCrew/funkVis",
+            "ref": "22b1ce089dd924f15cdc4632397ef3504d464e90"
+        },
+        {
+            "name": "grig.audio",
+            "type": "git",
+            "dir": null,
+            "url": "https://gitlab.com/haxe-grig/grig.audio"
+        },
+        {
+            "name": "hxscript",
+            "type": "haxelib",
+            "version": "2.0.4",
+            "dir": null
+        },
+        {
+            "name": "hscript",
+            "type": "haxelib",
+            "version": "2.7.0",
+            "dir": null
+        },
+        {
+            "name": "hxcpp-debug-server",
+            "type": "haxelib",
+            "version": "1.2.4",
+            "dir": null
+        },
+        {
+            "name": "hxcpp",
+            "type": "git",
+            "dir": null,
+            "ref": "v4.3.152",
+            "url": "https://github.com/HaxeFoundation/hxcpp"
+        },
+        {
+            "name": "hxdiscord_rpc",
+            "type": "haxelib",
+            "version": "1.3.0",
+            "dir": null
+        },
+        {
+            "name": "hxvlc",
+            "type": "haxelib",
+            "version": "2.3.1",
+            "dir": null
+        },
+        {
+            "name": "hxluajit",
+            "type": "git",
+            "dir": null,
+            "url": "https://github.com/MAJigsaw77/hxluajit"
+        },
+        {
+            "name": "hxluajit-wrapper",
+            "type": "git",
+            "dir": null,
+            "url": "https://github.com/MAJigsaw77/hxluajit-wrapper"
+        },
+        {
+            "name": "hxhardware",
+            "type": "git",
+            "dir": null,
+            "url": "https://github.com/Vortex2Oblivion/hxhardware"
+        },
+        {
+            "name": "tink_core",
+            "type": "haxelib",
+            "version": "1.26.0",
+            "dir": null
+        },
+        {
+            "name": "tjson",
+            "type": "haxelib",
+            "version": "1.4.0",
+            "dir": null
+        },
+        {
+            "name": "funkin-modchart",
+            "type": "git",
+            "dir": null,
+            "ref": null,
+            "url": "https://github.com/CodenameCrew/FunkinModchart"
+        }
+    ]
 }

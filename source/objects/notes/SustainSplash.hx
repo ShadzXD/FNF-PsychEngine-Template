@@ -18,6 +18,8 @@ class SustainSplash extends FlxSprite {
 		animation.addByPrefix('start', 'start', 16, false);
 		animation.addByPrefix('hold', 'hold', 18, true);
 		animation.addByPrefix('end', 'end', 24, false);
+		shader = new objects.notes.NoteSplash.PixelSplashShaderRef().shader;
+
 	}
 
 	override function update(elapsed) {
@@ -38,8 +40,7 @@ class SustainSplash extends FlxSprite {
 
 	public function setupSusSplash(strum:StrumNote, daNote:Note, ?playbackRate:Float = 1):Void {
 		final lengthToGet:Int = !daNote.isSustainNote ? daNote.tail.length : daNote.parent.tail.length;
-		if (strum.visible == false || strum == null) // kill splash if size of hold is too small
-		{
+		if (strum == null) {
 			kill();
 			return;
 		}
@@ -51,7 +52,6 @@ class SustainSplash extends FlxSprite {
 		clipRect = new flixel.math.FlxRect(0, !PlayState.isPixelStage ? 0 : -210, frameWidth, frameHeight);
 
 		if (daNote.shader != null) {
-			shader = new objects.notes.NoteSplash.PixelSplashShaderRef().shader;
 			shader.data.r.value = daNote.shader.data.r.value;
 			shader.data.g.value = daNote.shader.data.g.value;
 			shader.data.b.value = daNote.shader.data.b.value;

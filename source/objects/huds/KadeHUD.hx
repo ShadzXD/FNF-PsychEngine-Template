@@ -7,8 +7,7 @@ import objects.HealthIcon;
  * Recreation of Kade Engine's hud.
  */
 @:access(states.PlayState)
-class KadeHUD extends MainHUD
-{
+class KadeHUD extends BaseHUD {
 	var iconOffset:Int = 26;
 	final IDLE_ICON_VALUE = 0;
 	final LOSING_ICON_VALUE = 1;
@@ -19,8 +18,7 @@ class KadeHUD extends MainHUD
 	var botplayFUCKText:FlxText; // i love coding, dont u ?
 
 	// fuck fuck fuck fuck fuck
-	public function new()
-	{
+	public function new() {
 		super();
 		PlayState.instance.useNewScoring = false;
 
@@ -31,8 +29,7 @@ class KadeHUD extends MainHUD
 		kadeEngineWatermark.scrollFactor.set();
 		add(kadeEngineWatermark);
 
-		healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.9 : 0.08), 'healthBar', function()
-		{
+		healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.9 : 0.08), 'healthBar', function() {
 			return PlayState.instance.get_health();
 		}, 0, 2);
 		healthBar.screenCenter(X);
@@ -63,8 +60,7 @@ class KadeHUD extends MainHUD
 		iconP2.alpha = ClientPrefs.data.healthBarAlpha;
 		iconGroup.add(iconP2);
 
-		if (PlayState.SONG.flippedHealth)
-		{
+		if (PlayState.SONG.flippedHealth) {
 			healthBar.leftToRight = true;
 			healthBar.setColors(FlxColor.LIME, FlxColor.RED);
 			iconP1.flipX = true;
@@ -78,32 +74,26 @@ class KadeHUD extends MainHUD
 		add(botplayFUCKText);
 	}
 
-	override function createPost()
-	{
+	override function createPost() {
 		kadeEngineWatermark.text = PlayState.instance.curSong + " " + CoolUtil.capitalize(Difficulty.getString()) + " - KE 1.1.2" + " (PE 1.0.4" + ")";
 	}
 
-	override function update(elapsed:Float)
-	{
+	override function update(elapsed:Float) {
 		var newPercent:Null<Float> = FlxMath.remapToRange(FlxMath.bound(healthBar.valueFunction(), healthBar.bounds.min, healthBar.bounds.max),
 			healthBar.bounds.min, healthBar.bounds.max, 0, 100);
 		healthBar.percent = (newPercent != null ? newPercent : 0);
-		for (obj in iconGroup)
-		{
+		for (obj in iconGroup) {
 			obj.setGraphicSize(Std.int(FlxMath.lerp(150, obj.width, 0.50)));
 
 			obj.updateHitbox();
-			if (obj.isPlayer)
-			{
+			if (obj.isPlayer) {
 				if (!PlayState.SONG.flippedHealth)
 					obj.x = (healthBar.barCenter + (150 * obj.scale.x - 150) / 2 - (obj.isAlly ? iconOffset - ALLY_ICON_OFFSET : iconOffset));
 				else
 					obj.x = healthBar.barCenter - (150 * obj.scale.x) / 2 - (obj.isAlly ? iconOffset + ENEMY_ICON_OFFSET : iconOffset) * 2;
 
 				obj.animation.curAnim.curFrame = (healthBar.percent < 20) ? LOSING_ICON_VALUE : IDLE_ICON_VALUE;
-			}
-			else
-			{
+			} else {
 				if (!PlayState.SONG.flippedHealth)
 					obj.x = healthBar.barCenter - (150 * obj.scale.x) / 2 - (obj.isAlly ? iconOffset + ENEMY_ICON_OFFSET : iconOffset) * 2;
 				else
@@ -117,8 +107,7 @@ class KadeHUD extends MainHUD
 
 	var isFC:Bool = true;
 
-	override public function updateScore(miss:Bool = false, ?score:Int, ?misses:Int, ?percent:Float)
-	{
+	override public function updateScore(miss:Bool = false, ?score:Int, ?misses:Int, ?percent:Float) {
 		// Rating Name
 		if (PlayState.instance.totalPlayed != 0) // Prevent divide by 0
 			recalculateRating(percent);
@@ -136,10 +125,8 @@ class KadeHUD extends MainHUD
 		scoreText.text = tempScore;
 	}
 
-	override function beatHit(curBeat:Int)
-	{
-		for (icon in iconGroup)
-		{
+	override function beatHit(curBeat:Int) {
+		for (icon in iconGroup) {
 			icon.setGraphicSize(Std.int(icon.width + 30));
 			icon.updateHitbox();
 		}
