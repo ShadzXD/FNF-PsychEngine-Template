@@ -2,9 +2,9 @@ package states.editors.content;
 
 import backend.Song;
 import backend.Rating;
-import objects.Note;
-import objects.NoteSplash;
-import objects.StrumNote;
+import objects.notes.Note;
+import objects.notes.NoteSplash;
+import objects.notes.StrumNote;
 import flixel.util.FlxSort;
 import flixel.util.FlxStringUtil;
 import flixel.animation.FlxAnimationController;
@@ -55,7 +55,7 @@ class EditorPlayState extends MusicBeatSubstate {
 
 	var scoreTxt:FlxText;
 	var dataTxt:FlxText;
-	var guitarHeroSustains:Bool = false;
+	var guitarHeroSustains:Bool = true;
 
 	var _noteList:Array<Note>;
 
@@ -81,13 +81,12 @@ class EditorPlayState extends MusicBeatSubstate {
 		timerToStart = startOffset;
 
 		cachePopUpScore();
-		guitarHeroSustains = ClientPrefs.data.guitarHeroSustains;
+		guitarHeroSustains = true;
 		if (ClientPrefs.data.hitsoundVolume > 0)
 			Paths.sound('hitsound');
 
 		/* setting up Editor PlayState stuff */
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
-		bg.antialiasing = ClientPrefs.data.antialiasing;
 		bg.scrollFactor.set();
 		bg.color = 0xFF101010;
 		bg.alpha = 0.9;
@@ -406,39 +405,7 @@ class EditorPlayState extends MusicBeatSubstate {
 		unspawnNotes.sort(PlayState.sortByTime);
 	}
 
-	private function generateStaticArrows(player:Int):Void {
-		var strumLineX:Float = ClientPrefs.data.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X;
-		var strumLineY:Float = ClientPrefs.data.downScroll ? (FlxG.height - 150) : 50;
-		for (i in 0...4) {
-			// FlxG.log.add(i);
-			var targetAlpha:Float = 1;
-			if (player < 1) {
-				if (!ClientPrefs.data.opponentStrums)
-					targetAlpha = 0;
-				else if (ClientPrefs.data.middleScroll)
-					targetAlpha = 0.35;
-			}
-
-			var babyArrow:StrumNote = new StrumNote(strumLineX, strumLineY, i, player);
-			babyArrow.downScroll = ClientPrefs.data.downScroll;
-			babyArrow.alpha = targetAlpha;
-
-			if (player == 1)
-				playerStrums.add(babyArrow);
-			else {
-				if (ClientPrefs.data.middleScroll) {
-					babyArrow.x += 310;
-					if (i > 1) { // Up and Right
-						babyArrow.x += FlxG.width / 2 + 25;
-					}
-				}
-				opponentStrums.add(babyArrow);
-			}
-
-			strumLineNotes.add(babyArrow);
-			babyArrow.playerPosition();
-		}
-	}
+	private function generateStaticArrows(player:Int):Void {}
 
 	public function finishSong():Void {
 		if (ClientPrefs.data.noteOffset <= 0) {

@@ -1,6 +1,6 @@
 package backend;
 
-import objects.Note;
+import objects.notes.Note;
 
 typedef NoteTypeProperty = {
 	property:Array<String>,
@@ -96,7 +96,8 @@ class NoteTypesConfig {
 			for (i in 1...propArray.length) {
 				var str:String = propArray[i];
 				var parsed:Null<Int> = Std.parseInt(str.substr(0, str.length - 1).trim());
-				if (parsed == null) return obj; // malformed `[abc]` chunk -- bail with current target
+				if (parsed == null)
+					return obj; // malformed `[abc]` chunk -- bail with current target
 				var id:Int = parsed;
 				if (i < propArray.length - 1)
 					obj = obj[id]; // middles

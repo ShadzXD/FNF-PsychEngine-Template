@@ -1,4 +1,4 @@
-package objects;
+package objects.notes;
 
 import backend.animation.PsychAnimationController;
 import shaders.RGBPalette;
@@ -30,7 +30,6 @@ class StrumNote extends FlxSprite {
 
 	public function new(x:Float, y:Float, leData:Int, player:Int) {
 		animation = new PsychAnimationController(this);
-
 		rgbShader = new RGBShaderReference(this, Note.initializeGlobalRGBShader(leData));
 		rgbShader.enabled = false;
 		if (PlayState.SONG != null && PlayState.SONG.disableNoteRGB)
@@ -40,11 +39,7 @@ class StrumNote extends FlxSprite {
 		if (PlayState.isPixelStage)
 			arr = ClientPrefs.data.arrowRGBPixel[leData];
 
-		// `arr` is the per-direction RGB triple ([r,g,b], length 3); the
-		// previous `leData < arr.length` guard rejected leData == 3 (right
-		// strum) and silently disabled its RGB shader. Validate the triple
-		// itself instead of comparing direction index against colour count.
-		if (arr != null && arr.length >= 3) {
+		if (leData <= arr.length) {
 			@:bypassAccessor
 			{
 				rgbShader.r = arr[0];
@@ -70,7 +65,6 @@ class StrumNote extends FlxSprite {
 			skin = customSkin;
 
 		texture = skin; // Load texture and anims
-		scrollFactor.set();
 		playAnim('static');
 	}
 
@@ -80,18 +74,10 @@ class StrumNote extends FlxSprite {
 			lastAnim = animation.curAnim.name;
 
 		if (PlayState.isPixelStage) {
-			// Cache the pixel atlas reference -- the previous code called
-			// Paths.image() twice for the exact same texture key, which
-			// triggers a redundant cache lookup and graphic decode.
-			final pixelGraphic = Paths.image('pixelUI/' + texture);
-			if (pixelGraphic == null) {
-				FlxG.log.error('StrumNote: pixel skin missing -- could not load "images/pixelUI/$texture.png"');
-				return;
-			}
-			loadGraphic(pixelGraphic);
+			loadGraphic(Paths.image('pixelUI/' + texture));
 			width = width / 4;
 			height = height / 5;
-			loadGraphic(pixelGraphic, true, Math.floor(width), Math.floor(height));
+			loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
 
 			antialiasing = false;
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -125,7 +111,6 @@ class StrumNote extends FlxSprite {
 			animation.addByPrefix('purple', 'arrowLEFT');
 			animation.addByPrefix('red', 'arrowRIGHT');
 
-			antialiasing = ClientPrefs.data.antialiasing;
 			setGraphicSize(Std.int(width * 0.7));
 
 			switch (Math.abs(noteData) % 4) {
@@ -156,8 +141,8 @@ class StrumNote extends FlxSprite {
 
 	public function playerPosition() {
 		x += Note.swagWidth * noteData;
-		x += 50;
-		x += ((FlxG.width / 2) * player);
+		x += 100;
+		// x += ((FlxG.width / 2) * player);
 	}
 
 	override function update(elapsed:Float) {

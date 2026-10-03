@@ -14,9 +14,10 @@ import flixel.FlxState;
 import flixel.addons.display.FlxRuntimeShader;
 #end
 import cutscenes.DialogueBoxPsych;
-import objects.StrumNote;
-import objects.Note;
-import objects.NoteSplash;
+import objects.notes.StrumNote;
+import objects.notes.Note;
+import objects.notes.NoteSplash;
+import objects.notes.StrumLine;
 import objects.Character;
 import states.MainMenuState;
 import states.StoryMenuState;
@@ -176,7 +177,6 @@ class FunkinLua {
 			set('playbackRate', 1);
 			#end
 
-			set('guitarHeroSustains', game.guitarHeroSustains);
 			set('instakillOnMiss', game.instakillOnMiss);
 			set('botPlay', game.cpuControlled);
 			set('practice', game.practiceMode);
@@ -224,7 +224,7 @@ class FunkinLua {
 		set('noteSkinPostfix', Note.getNoteSkinPostfix());
 		set('splashSkin', ClientPrefs.data.splashSkin);
 		set('splashSkinPostfix', NoteSplash.getSplashSkinPostfix());
-		set('splashAlpha', ClientPrefs.data.splashAlpha);
+		set('noteSplashAlpha', ClientPrefs.data.noteSplashAlpha);
 
 		// build target (windows, mac, linux, etc.)
 		set('buildTarget', LuaUtils.getBuildTarget());
@@ -741,15 +741,14 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "precacheMusic", function(name:String) {
 			Paths.music(name);
 		});
-		Lua_helper.add_callback(lua, "precacheVideo",
-			function(name:String, ?canSkip:Bool = true, ?forMidSong:Bool = false, ?loop:Bool = false) {
-				#if VIDEOS_ALLOWED
-				if (FileSystem.exists(Paths.video(name)))
-					game.precacheVideo(name, forMidSong, canSkip, loop);
-				else
-					luaTrace('precacheVideo: Video file not found: ' + name, false, false, FlxColor.RED);
-				#end
-			});
+		Lua_helper.add_callback(lua, "precacheVideo", function(name:String, ?canSkip:Bool = true, ?forMidSong:Bool = false, ?loop:Bool = false) {
+			#if VIDEOS_ALLOWED
+			if (FileSystem.exists(Paths.video(name)))
+				game.precacheVideo(name, forMidSong, canSkip, loop);
+			else
+				luaTrace('precacheVideo: Video file not found: ' + name, false, false, FlxColor.RED);
+			#end
+		});
 
 		// others
 		Lua_helper.add_callback(lua, "triggerEvent", function(name:String, ?value1:String = '', ?value2:String = '') {
@@ -1169,25 +1168,6 @@ class FunkinLua {
 			return (obj != null && Std.isOfType(obj, FlxSound));
 		});
 
-		Lua_helper.add_callback(lua, "setHealthBarColors", function(left:String, right:String) {
-			var left_color:Null<FlxColor> = null;
-			var right_color:Null<FlxColor> = null;
-			if (left != null && left != '')
-				left_color = CoolUtil.colorFromString(left);
-			if (right != null && right != '')
-				right_color = CoolUtil.colorFromString(right);
-			game.healthBar.setColors(left_color, right_color);
-		});
-		Lua_helper.add_callback(lua, "setTimeBarColors", function(left:String, right:String) {
-			var left_color:Null<FlxColor> = null;
-			var right_color:Null<FlxColor> = null;
-			if (left != null && left != '')
-				left_color = CoolUtil.colorFromString(left);
-			if (right != null && right != '')
-				right_color = CoolUtil.colorFromString(right);
-			game.timeBar.setColors(left_color, right_color);
-		});
-
 		Lua_helper.add_callback(lua, "setObjectCamera", function(obj:String, camera:String = 'game') {
 			var real:FlxBasic = game.getLuaObject(obj);
 			if (real != null) {
@@ -1306,13 +1286,13 @@ class FunkinLua {
 				} else
 					luaTrace('startDialogue: Your dialogue file is badly formatted!', false, false, FlxColor.RED);
 			}
-			else {
-				luaTrace('startDialogue: Dialogue file not found', false, false, FlxColor.RED);
-				if (game.endingSong)
-					game.endSong();
-				else
-					game.startCountdown();
-			}
+		else {
+			luaTrace('startDialogue: Dialogue file not found', false, false, FlxColor.RED);
+			if (game.endingSong)
+				game.endSong();
+			else
+				game.startCountdown();
+		}
 			return false;
 		});
 		Lua_helper.add_callback(lua, "startVideo",
@@ -1700,14 +1680,12 @@ class FunkinLua {
 		if (PlayState.instance == null)
 			return null;
 
-		var strumLen:Int = PlayState.instance.strumLineNotes.length;
-		if (strumLen <= 0)
+		var strumline:StrumLine = PlayState.instance.strumlines.members[note % PlayState.instance.strumlines.length];
+		if (strumline == null)
 			return null;
-
-		var strumNote:StrumNote = PlayState.instance.strumLineNotes.members[note % strumLen];
+		var strumNote:StrumNote = strumline.members[note];
 		if (strumNote == null)
 			return null;
-
 		if (tag != null) {
 			var originalTag:String = tag;
 			tag = LuaUtils.formatVariable('tween_$tag');
@@ -1749,12 +1727,16 @@ class FunkinLua {
 		var result:Dynamic = Convert.fromLua(lua, -1);
 		Lua.pop(lua, 1);
 
-		if (result == null) return false;
+		if (result == null)
+			return false;
 		// Convert.fromLua may return a real Bool, an Int (lua 'number'),
 		// or a String; coerce the common truthy forms.
-		if (result == true) return true;
-		if (result == false) return false;
-		if ((result is String)) return (result == 'true');
+		if (result == true)
+			return true;
+		if (result == false)
+			return false;
+		if ((result is String))
+			return (result == 'true');
 		return false;
 	}
 
@@ -1788,9 +1770,12 @@ class FunkinLua {
 		if (v != null)
 			v = v.trim();
 		if (v == null || v == "") {
-			if (status == Lua.ERRRUN) return "Runtime Error";
-			if (status == Lua.ERRMEM) return "Memory Allocation Error";
-			if (status == Lua.ERRERR) return "Critical Error";
+			if (status == Lua.ERRRUN)
+				return "Runtime Error";
+			if (status == Lua.ERRMEM)
+				return "Memory Allocation Error";
+			if (status == Lua.ERRERR)
+				return "Critical Error";
 			return "Unknown Error";
 		}
 

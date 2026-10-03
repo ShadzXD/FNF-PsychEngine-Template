@@ -1,7 +1,7 @@
 package backend;
 
 import backend.Song;
-import objects.Note;
+import objects.notes.Note;
 
 typedef BPMChangeEvent = {
 	var stepTime:Int;
@@ -24,7 +24,8 @@ class Conductor {
 
 	public static function judgeNote(arr:Array<Rating>, diff:Float = 0):Rating // die
 	{
-		if (arr == null || arr.length == 0) return null;
+		if (arr == null || arr.length == 0)
+			return null;
 		final last:Int = arr.length - 1;
 		for (i in 0...last) { // skips last window (Shit)
 			final hw:Null<Float> = arr[i].hitWindow;

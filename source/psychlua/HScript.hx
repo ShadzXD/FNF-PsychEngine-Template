@@ -280,7 +280,6 @@ class HScript {
 	}
 
 	public function preset() {
-
 		// Some very commonly used classes
 		set('Type', Type);
 		#if sys
@@ -307,7 +306,7 @@ class HScript {
 		#end
 		set('Character', Character);
 		set('Alphabet', Alphabet);
-		set('Note', objects.Note);
+		set('Note', objects.notes.Note);
 		set('CustomSubstate', CustomSubstate);
 		#if (!flash && sys)
 		set('FlxRuntimeShader', flixel.addons.display.FlxRuntimeShader);
@@ -702,7 +701,6 @@ class CustomInterp extends Interp {
 		return super.resolve(id);
 	}
 }
-
 #else
 class HScript {
 	#if LUA_ALLOWED

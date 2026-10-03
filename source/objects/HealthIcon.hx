@@ -36,7 +36,8 @@ class HealthIcon extends FlxSprite {
 			// frame width and a NaN crash. Treat anything <1 as a
 			// single-frame icon.
 			var iSize:Int = Math.round(graphic.width / graphic.height);
-			if (iSize < 1) iSize = 1;
+			if (iSize < 1)
+				iSize = 1;
 			loadGraphic(graphic, true, Math.floor(graphic.width / iSize), Math.floor(graphic.height));
 			iconOffsets[0] = (width - 150) / iSize;
 			iconOffsets[1] = (height - 150) / iSize;
@@ -48,8 +49,6 @@ class HealthIcon extends FlxSprite {
 
 			if (char.endsWith('-pixel'))
 				antialiasing = false;
-			else
-				antialiasing = ClientPrefs.data.antialiasing;
 		}
 	}
 

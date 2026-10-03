@@ -320,11 +320,13 @@ class Paths {
 	static public function getAtlas(key:String, ?parentFolder:String = null, ?allowGPU:Bool = true):FlxAtlasFrames {
 		var useMod = false;
 		var imageLoaded:FlxGraphic = image(key, parentFolder, allowGPU);
-		if (imageLoaded == null) return null; // every path below resolves to null frames anyway
+		if (imageLoaded == null)
+			return null; // every path below resolves to null frames anyway
 
 		// See getSparrowAtlas.
 		var cached:FlxAtlasFrames = FlxAtlasFrames.findFrame(imageLoaded);
-		if (cached != null) return cached;
+		if (cached != null)
+			return cached;
 
 		var myXml:Dynamic = getPath('images/$key.xml', TEXT, parentFolder, true);
 		if (OpenFlAssets.exists(myXml) #if MODS_ALLOWED || (FileSystem.exists(myXml) && (useMod = true)) #end) {
@@ -363,12 +365,14 @@ class Paths {
 
 	inline static public function getSparrowAtlas(key:String, ?parentFolder:String = null, ?allowGPU:Bool = true):FlxAtlasFrames {
 		var imageLoaded:FlxGraphic = image(key, parentFolder, allowGPU);
-		if (imageLoaded == null) return null; // missing image -> avoid openfl spamming "null" asset-id errors
+		if (imageLoaded == null)
+			return null; // missing image -> avoid openfl spamming "null" asset-id errors
 
 		// The from* parsers reuse an atlas already parsed for this graphic, but only once handed the
 		// description -- so reading it off disk first is wasted on every call after the first.
 		var cached:FlxAtlasFrames = FlxAtlasFrames.findFrame(imageLoaded);
-		if (cached != null) return cached;
+		if (cached != null)
+			return cached;
 
 		#if MODS_ALLOWED
 		var xmlExists:Bool = false;
@@ -386,11 +390,13 @@ class Paths {
 
 	inline static public function getPackerAtlas(key:String, ?parentFolder:String = null, ?allowGPU:Bool = true):FlxAtlasFrames {
 		var imageLoaded:FlxGraphic = image(key, parentFolder, allowGPU);
-		if (imageLoaded == null) return null;
+		if (imageLoaded == null)
+			return null;
 
 		// See getSparrowAtlas.
 		var cached:FlxAtlasFrames = FlxAtlasFrames.findFrame(imageLoaded);
-		if (cached != null) return cached;
+		if (cached != null)
+			return cached;
 
 		#if MODS_ALLOWED
 		var txtExists:Bool = false;
@@ -408,11 +414,13 @@ class Paths {
 
 	inline static public function getAsepriteAtlas(key:String, ?parentFolder:String = null, ?allowGPU:Bool = true):FlxAtlasFrames {
 		var imageLoaded:FlxGraphic = image(key, parentFolder, allowGPU);
-		if (imageLoaded == null) return null;
+		if (imageLoaded == null)
+			return null;
 
 		// See getSparrowAtlas.
 		var cached:FlxAtlasFrames = FlxAtlasFrames.findFrame(imageLoaded);
-		if (cached != null) return cached;
+		if (cached != null)
+			return cached;
 
 		#if MODS_ALLOWED
 		var jsonExists:Bool = false;
@@ -500,64 +508,11 @@ class Paths {
 	}
 	#end
 
-	#if flxanimate
-	public static function loadAnimateAtlas(spr:FlxAnimate, folderOrImg:Dynamic, spriteJson:Dynamic = null, animationJson:Dynamic = null) {
-		var changedAnimJson = false;
-		var changedAtlasJson = false;
-		var changedImage = false;
+	inline static public function getTextureAtlas(key:String, ?library:String):FlxAnimateFrames {
+		// gpu caching
+		Paths.image(key + '/spritemap1', library);
 
-		if (spriteJson != null) {
-			changedAtlasJson = true;
-			spriteJson = File.getContent(spriteJson);
-		}
-
-		if (animationJson != null) {
-			changedAnimJson = true;
-			animationJson = File.getContent(animationJson);
-		}
-
-		// is folder or image path
-		if (Std.isOfType(folderOrImg, String)) {
-			var originalPath:String = folderOrImg;
-			for (i in 0...10) {
-				var st:String = '$i';
-				if (i == 0)
-					st = '';
-
-				if (!changedAtlasJson) {
-					spriteJson = getTextFromFile('images/$originalPath/spritemap$st.json');
-					if (spriteJson != null) {
-						// trace('found Sprite Json');
-						changedImage = true;
-						changedAtlasJson = true;
-						folderOrImg = image('$originalPath/spritemap$st');
-						break;
-					}
-				} else if (fileExists('images/$originalPath/spritemap$st.png', IMAGE)) {
-					// trace('found Sprite PNG');
-					changedImage = true;
-					folderOrImg = image('$originalPath/spritemap$st');
-					break;
-				}
-			}
-
-			if (!changedImage) {
-				// trace('Changing folderOrImg to FlxGraphic');
-				changedImage = true;
-				folderOrImg = image(originalPath);
-			}
-
-			if (!changedAnimJson) {
-				// trace('found Animation Json');
-				changedAnimJson = true;
-				animationJson = getTextFromFile('images/$originalPath/Animation.json');
-			}
-		}
-
-		// trace(folderOrImg);
-		// trace(spriteJson);
-		// trace(animationJson);
-		spr.loadAtlasEx(folderOrImg, spriteJson, animationJson);
+		var path:String = getPath('images/' + key);
+		return animate.FlxAnimateFrames.fromAnimate(path);
 	}
-	#end
 }

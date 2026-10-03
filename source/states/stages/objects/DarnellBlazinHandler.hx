@@ -1,6 +1,6 @@
 package states.stages.objects;
 
-import objects.Note;
+import objects.notes.Note;
 import objects.Character;
 
 class DarnellBlazinHandler {

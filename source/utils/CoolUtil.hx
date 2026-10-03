@@ -1,4 +1,4 @@
-package backend;
+package utils;
 
 import openfl.utils.Assets;
 import lime.utils.Assets as LimeAssets;

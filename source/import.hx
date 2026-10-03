@@ -19,7 +19,6 @@ import js.html.*;
 #end
 import backend.Paths;
 import backend.Controls;
-import backend.CoolUtil;
 import backend.MusicBeatState;
 import backend.MusicBeatSubstate;
 import backend.CustomFadeTransition;
@@ -35,10 +34,9 @@ import objects.Alphabet;
 import objects.BGSprite;
 import states.PlayState;
 import states.LoadingState;
-#if flxanimate
-import flxanimate.*;
-import flxanimate.PsychFlxAnimate as FlxAnimate;
-#end
+import animate.FlxAnimate;
+import animate.FlxAnimateFrames;
+import utils.CoolUtil;
 // Flixel
 import flixel.sound.FlxSound;
 import flixel.FlxG;

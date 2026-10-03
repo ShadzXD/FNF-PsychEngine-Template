@@ -46,7 +46,6 @@ class DialogueCharacter extends FlxSprite {
 		frames = Paths.getSparrowAtlas('dialogue/' + jsonFile.image);
 		reloadAnimations();
 
-		antialiasing = ClientPrefs.data.antialiasing;
 		if (jsonFile.no_antialiasing == true)
 			antialiasing = false;
 	}
@@ -98,7 +97,8 @@ class DialogueCharacter extends FlxSprite {
 
 		// If we still don't have a valid anim (no dialogueAnimations at all),
 		// bail out instead of letting "null$IDLE_POSTFIX" reach FlxAnimation.
-		if (leAnim == null) return;
+		if (leAnim == null)
+			return;
 
 		if (dialogueAnimations.exists(leAnim)
 			&& (dialogueAnimations.get(leAnim).loop_name == null

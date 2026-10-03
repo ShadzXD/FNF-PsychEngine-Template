@@ -11,6 +11,7 @@ import hxhardware.CPU;
 import hxhardware.GPU;
 import hxhardware.Memory;
 #end
+import utils.MemoryUtil;
 
 /**
 	A configurable performance overlay for an OpenFL/HaxeFlixel project.
@@ -302,7 +303,7 @@ class FPSCounter extends TextField {
 	}
 
 	@:noCompletion inline function bytes(v:Float):String
-		return flixel.util.FlxStringUtil.formatBytes(v);
+		return MemoryUtil.formatMemory(v);
 
 	// Current process memory. Uses the real process working set when hxhardware
 	// is available; otherwise falls back to the (smaller) GC figure.

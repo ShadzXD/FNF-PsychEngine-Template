@@ -6,7 +6,7 @@ import flixel.addons.display.FlxTiledSprite;
 import flixel.graphics.frames.FlxAtlasFrames;
 import substates.GameOverSubstate;
 import states.stages.objects.*;
-import objects.Note;
+import objects.notes.Note;
 import cutscenes.CutsceneHandler;
 
 enum NeneState {
@@ -44,7 +44,6 @@ class PhillyStreets extends BaseStage {
 		if (!ClientPrefs.data.lowQuality) {
 			var skyImage = Paths.image('phillyStreets/phillySkybox');
 			scrollingSky = new FlxTiledSprite(skyImage, skyImage.width + 400, skyImage.height, true, false);
-			scrollingSky.antialiasing = ClientPrefs.data.antialiasing;
 			scrollingSky.setPosition(-650, -375);
 			scrollingSky.scrollFactor.set(0.1, 0.1);
 			scrollingSky.scale.set(0.65, 0.65);
@@ -115,7 +114,6 @@ class PhillyStreets extends BaseStage {
 
 		if (!ClientPrefs.data.lowQuality) {
 			picoFade = new FlxSprite();
-			picoFade.antialiasing = ClientPrefs.data.antialiasing;
 			picoFade.alpha = 0;
 			add(picoFade);
 			darkenable.push(picoFade);
@@ -368,8 +366,8 @@ class PhillyStreets extends BaseStage {
 		else
 			abot.lookLeft();
 
-		if (finishInstantly)
-			abot.eyes.anim.curFrame = abot.eyes.anim.length - 1;
+		///if (finishInstantly)
+		// abot.eyes.animation.curAnim.curFrame = abot.eyes.animation.curAnim.numFrames - 1;
 	}
 
 	override function startSong() {
@@ -406,7 +404,7 @@ class PhillyStreets extends BaseStage {
 		function createCan() {
 			if (didCreateCan)
 				return;
-			spraycan = new SpraycanAtlasSprite(spraycanPile.x + 530, spraycanPile.y - 240);
+			spraycan = new SpraycanAtlasSprite(spraycanPile.x + 80, spraycanPile.y - 840);
 			add(spraycan);
 
 			lightCanSnd = new FlxSound();
@@ -558,7 +556,8 @@ class PhillyStreets extends BaseStage {
 	var car2Interruptable:Bool = true;
 
 	override function beatHit() {
-		// if(curBeat % 2 == 0) abot.beatHit();
+		if (curBeat % 2 == 0)
+			abot.beatHit();
 		switch (currentNeneState) {
 			case STATE_READY:
 				if (blinkCountdown == 0) {

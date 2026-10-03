@@ -31,10 +31,11 @@
 			"dir": null
 		},
 		{
-			"name": "flxanimate",
+			"name": "flixel-animate",
 			"type": "git",
 			"dir": null,
-			"url": "https://github.com/Dot-Stuff/flxanimate"
+			"url": "https://github.com/MaybeMaru/flixel-animate",
+			"ref": "dcaa33ca8845f23d7c4c441025cecaacc91b0eff"
 		},
 		{
 			"name": "funkin.vis",
@@ -84,7 +85,7 @@
 		{
 			"name": "hxvlc",
 			"type": "haxelib",
-			"version": "2.3.0",
+			"version": "2.3.1",
 			"dir": null
 		},
 		{

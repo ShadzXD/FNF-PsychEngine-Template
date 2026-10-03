@@ -1,10 +1,10 @@
-package objects;
+package objects.notes;
 
 import backend.animation.PsychAnimationController;
 import backend.NoteTypesConfig;
 import shaders.RGBPalette;
 import shaders.RGBPalette.RGBShaderReference;
-import objects.StrumNote;
+import objects.notes.StrumNote;
 import flixel.math.FlxRect;
 
 using StringTools;
@@ -30,7 +30,7 @@ typedef NoteSplashData = {
 
 /**
  * The note object used as a data structure to spawn and manage notes during gameplay.
- * 
+ *
  * If you want to make a custom note type, you should search for: "function set_noteType"
 **/
 class Note extends FlxSprite {
@@ -113,7 +113,7 @@ class Note extends FlxSprite {
 		r: -1,
 		g: -1,
 		b: -1,
-		a: ClientPrefs.data.splashAlpha
+		a: ClientPrefs.data.noteSplashAlpha
 	};
 
 	public var offsetX:Float = 0;
@@ -149,6 +149,11 @@ class Note extends FlxSprite {
 	public var hitsoundForce:Bool = false;
 
 	public var hitsoundVolume(get, default):Float = 1.0;
+
+	/**
+	 * Mess with this to use a custom strumline.
+	 */
+	public var strumline:Int = -1;
 
 	function get_hitsoundVolume():Float {
 		if (ClientPrefs.data.hitsoundVolume > 0)
@@ -295,11 +300,11 @@ class Note extends FlxSprite {
 			prevNote.nextNote = this;
 
 		if (isSustainNote && prevNote != null) {
-			alpha = 0.6;
-			multAlpha = 0.6;
+			multAlpha = 1;
 			hitsoundDisabled = true;
 			if (ClientPrefs.data.downScroll)
 				flipY = true;
+			scale.y = 0.62;
 
 			offsetX += width / 2;
 			copyAngle = false;
@@ -316,12 +321,12 @@ class Note extends FlxSprite {
 			if (prevNote.isSustainNote) {
 				prevNote.animation.play(colArray[prevNote.noteData % colArray.length] + 'hold');
 
-				prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.05;
+				prevNote.scale.y = Conductor.stepCrochet / 100 * 1.058;
 				if (createdFrom != null && createdFrom.songSpeed != null)
 					prevNote.scale.y *= createdFrom.songSpeed;
 
 				if (PlayState.isPixelStage) {
-					prevNote.scale.y *= 1.19;
+					prevNote.scale.y *= 4.58;
 					prevNote.scale.y *= (6 / height); // Auto adjust note size
 				}
 				prevNote.updateHitbox();

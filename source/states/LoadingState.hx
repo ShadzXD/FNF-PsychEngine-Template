@@ -14,8 +14,8 @@ import backend.Song;
 import backend.StageData;
 import objects.Character;
 import sys.thread.Mutex;
-import objects.Note;
-import objects.NoteSplash;
+import objects.notes.Note;
+import objects.notes.NoteSplash;
 #if HSCRIPT_ALLOWED
 import psychlua.HScript;
 import psychlua.HScript.HScriptError;

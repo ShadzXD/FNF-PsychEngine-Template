@@ -1,8 +1,8 @@
 package options;
 
-import objects.Note;
-import objects.StrumNote;
-import objects.NoteSplash;
+import objects.notes.Note;
+import objects.notes.StrumNote;
+import objects.notes.NoteSplash;
 import objects.Alphabet;
 
 class VisualsSettingsSubState extends BaseOptionsMenu {
@@ -40,12 +40,8 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 			if (!noteSkins.contains(ClientPrefs.data.noteSkin))
 				ClientPrefs.data.noteSkin = ClientPrefs.defaultData.noteSkin; // Reset to default if saved noteskin couldnt be found
 
-			noteSkins.insert(0, ClientPrefs.defaultData.noteSkin); //Default skin always comes first
-			var option:Option = new Option('Note Skins:',
-				"Select your prefered Note skin.",
-				'noteSkin',
-				STRING,
-				noteSkins);
+			noteSkins.insert(0, ClientPrefs.defaultData.noteSkin); // Default skin always comes first
+			var option:Option = new Option('Note Skins:', "Select your prefered Note skin.", 'noteSkin', STRING, noteSkins);
 			addOption(option);
 			option.onChange = onChangeNoteSkin;
 			noteOptionID = optionsArray.length - 1;
@@ -56,20 +52,13 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 			if (!noteSplashes.contains(ClientPrefs.data.splashSkin))
 				ClientPrefs.data.splashSkin = ClientPrefs.defaultData.splashSkin; // Reset to default if saved splashskin couldnt be found
 
-			noteSplashes.insert(0, ClientPrefs.defaultData.splashSkin); //Default skin always comes first
-			var option:Option = new Option('Note Splashes:',
-				"Select your prefered Note Splash variation.",
-				'splashSkin',
-				STRING,
-				noteSplashes);
+			noteSplashes.insert(0, ClientPrefs.defaultData.splashSkin); // Default skin always comes first
+			var option:Option = new Option('Note Splashes:', "Select your prefered Note Splash variation.", 'splashSkin', STRING, noteSplashes);
 			addOption(option);
 			option.onChange = onChangeSplashSkin;
 		}
 
-		var option:Option = new Option('Note Splash Opacity',
-			'How much transparent should the Note Splashes be.',
-			'splashAlpha',
-			PERCENT);
+		var option:Option = new Option('Note Splash Opacity', 'How much transparent should the Note Splashes be.', 'noteSplashAlpha', PERCENT);
 		option.scrollSpeed = 1.6;
 		option.minValue = 0.0;
 		option.maxValue = 1;
@@ -78,53 +67,32 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 		addOption(option);
 		option.onChange = playNoteSplashes;
 
-		var option:Option = new Option('Hide HUD',
-			'If checked, hides most HUD elements.',
-			'hideHud',
-			BOOL);
+		var option:Option = new Option('Hide HUD', 'If checked, hides most HUD elements.', 'hideHud', BOOL);
 		addOption(option);
-		
-		var option:Option = new Option('Time Bar:',
-			"What should the Time Bar display?",
-			'timeBarType',
-			STRING,
+
+		var option:Option = new Option('Time Bar:', "What should the Time Bar display?", 'timeBarType', STRING,
 			['Time Left', 'Time Elapsed', 'Song Name', 'Disabled']);
 		addOption(option);
 
-		var option:Option = new Option('Flashing Lights',
-			"Uncheck this if you're sensitive to flashing lights!",
-			'flashing',
-			BOOL);
+		var option:Option = new Option('Flashing Lights', "Uncheck this if you're sensitive to flashing lights!", 'flashing', BOOL);
 		addOption(option);
 
-		var option:Option = new Option('Camera Zooms',
-			"If unchecked, the camera won't zoom in on a beat hit.",
-			'camZooms',
-			BOOL);
+		var option:Option = new Option('Camera Zooms', "If unchecked, the camera won't zoom in on a beat hit.", 'camZooms', BOOL);
 		addOption(option);
 
-		var option:Option = new Option('Score Text Grow on Hit',
-			"If unchecked, disables the Score text growing\neverytime you hit a note.",
-			'scoreZoom',
-			BOOL);
+		var option:Option = new Option('Score Text Grow on Hit', "If unchecked, disables the Score text growing\neverytime you hit a note.", 'scoreZoom', BOOL);
 		addOption(option);
 
-		var option:Option = new Option('Health Bar Opacity',
-			'How much transparent should the health bar and icons be.',
-			'healthBarAlpha',
-			PERCENT);
+		var option:Option = new Option('Health Bar Opacity', 'How much transparent should the health bar and icons be.', 'healthBarAlpha', PERCENT);
 		option.scrollSpeed = 1.6;
 		option.minValue = 0.0;
 		option.maxValue = 1;
 		option.changeValue = 0.1;
 		option.decimals = 1;
 		addOption(option);
-		
+
 		#if !mobile
-		var option:Option = new Option('FPS Counter',
-			'If unchecked, hides FPS Counter.',
-			'showFPS',
-			BOOL);
+		var option:Option = new Option('FPS Counter', 'If unchecked, hides FPS Counter.', 'showFPS', BOOL);
 		FPSCounterSettingsSubState.bindDebugOption(option); // stored in DebugPrefs, not ClientPrefs
 		addOption(option);
 		option.onChange = onChangeFPSCounter;
@@ -133,34 +101,25 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 		// that always reads true; update() below intercepts ACCEPT on it.
 		var openFPS:Option = new Option('FPS Counter Settings...',
 			"Customize the performance counter: position, font size, update rate and which metrics (FPS, Memory, CPU, GPU) are shown.\nPress ACCEPT to open.",
-			OPEN_FPS_SETTINGS_VAR,
-			BOOL);
+			OPEN_FPS_SETTINGS_VAR, BOOL);
 		openFPS.defaultValue = true;
 		openFPS.getValue = function():Dynamic return true;
 		openFPS.setValue = function(v:Dynamic):Dynamic return true;
 		addOption(openFPS);
 		#end
-		
-		var option:Option = new Option('Pause Music:',
-			"What song do you prefer for the Pause Screen?",
-			'pauseMusic',
-			STRING,
+
+		var option:Option = new Option('Pause Music:', "What song do you prefer for the Pause Screen?", 'pauseMusic', STRING,
 			['None', 'Tea Time', 'Breakfast', 'Breakfast (Pico)']);
 		addOption(option);
 		option.onChange = onChangePauseMusic;
-		
+
 		#if CHECK_FOR_UPDATES
-		var option:Option = new Option('Check for Updates',
-			'On Release builds, turn this on to check for updates when you start the game.',
-			'checkForUpdates',
-			BOOL);
+		var option:Option = new Option('Check for Updates', 'On Release builds, turn this on to check for updates when you start the game.',
+			'checkForUpdates', BOOL);
 		addOption(option);
 
-		var channelOption:Option = new Option('Update Channel',
-			'Stable: official release builds.\nBleeding Edge: latest dev prereleases (may be unstable).',
-			'updateChannel',
-			STRING,
-			['Stable', 'Bleeding Edge']);
+		var channelOption:Option = new Option('Update Channel', 'Stable: official release builds.\nBleeding Edge: latest dev prereleases (may be unstable).',
+			'updateChannel', STRING, ['Stable', 'Bleeding Edge']);
 		channelOption.getValue = function():Dynamic return (ClientPrefs.data.updateChannel == 'bleeding') ? 'Bleeding Edge' : 'Stable';
 		channelOption.setValue = function(value:Dynamic):Dynamic {
 			ClientPrefs.data.updateChannel = (value == 'Bleeding Edge') ? 'bleeding' : 'stable';
@@ -171,16 +130,12 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 
 		#if DISCORD_ALLOWED
 		var option:Option = new Option('Discord Rich Presence',
-			"Uncheck this to prevent accidental leaks, it will hide the Application from your \"Playing\" box on Discord",
-			'discordRPC',
-			BOOL);
+			"Uncheck this to prevent accidental leaks, it will hide the Application from your \"Playing\" box on Discord", 'discordRPC', BOOL);
 		addOption(option);
 		#end
 
 		var option:Option = new Option('Combo Stacking',
-			"If unchecked, Ratings and Combo won't stack, saving on System Memory and making them easier to read",
-			'comboStacking',
-			BOOL);
+			"If unchecked, Ratings and Combo won't stack, saving on System Memory and making them easier to read", 'comboStacking', BOOL);
 		addOption(option);
 
 		super();
@@ -194,8 +149,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 	override function update(elapsed:Float):Void {
 		// Intercept ACCEPT on the opener row BEFORE super.update() toggles its
 		// BOOL value. Mirrors the guards super.update() uses.
-		if (!bindingKey && nextAccept <= 0 && controls.ACCEPT
-			&& optionsArray[curSelected].variable == OPEN_FPS_SETTINGS_VAR) {
+		if (!bindingKey && nextAccept <= 0 && controls.ACCEPT && optionsArray[curSelected].variable == OPEN_FPS_SETTINGS_VAR) {
 			FlxG.sound.play(Paths.sound('scrollMenu'));
 			openSubState(new FPSCounterSettingsSubState());
 			nextAccept = 5;
@@ -210,7 +164,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 		super.changeSelection(change);
 
 		switch (curOption.variable) {
-			case 'noteSkin', 'splashSkin', 'splashAlpha':
+			case 'noteSkin', 'splashSkin', 'noteSplashAlpha':
 				if (!notesShown) {
 					for (note in notes.members) {
 						FlxTween.cancelTweensOf(note);
@@ -235,11 +189,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu {
 	var changedMusic:Bool = false;
 
 	function onChangePauseMusic() {
-		if (ClientPrefs.data.pauseMusic == 'None')
-			FlxG.sound.music.volume = 0;
-		else
-			FlxG.sound.playMusic(Paths.music(Paths.formatToSongPath(ClientPrefs.data.pauseMusic)));
-
+		FlxG.sound.playMusic(Paths.music(Paths.formatToSongPath('breakfast')));
 		changedMusic = true;
 	}
 

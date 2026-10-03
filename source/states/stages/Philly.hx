@@ -47,7 +47,7 @@ class Philly extends BaseStage {
 		add(phillyStreet);
 	}
 
-	override function eventPushed(event:objects.Note.EventNote) {
+	override function eventPushed(event:objects.notes.Note.EventNote) {
 		switch (event.event) {
 			case "Philly Glow":
 				blammedLightsBlack = new FlxSprite(FlxG.width * -0.5,

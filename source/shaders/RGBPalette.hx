@@ -1,7 +1,7 @@
 package shaders;
 
 import flixel.system.FlxAssets.FlxShader;
-import objects.Note;
+import objects.notes.Note;
 
 class RGBPalette {
 	public var shader(default, null):RGBPaletteShader = new RGBPaletteShader();
@@ -136,7 +136,7 @@ class RGBShaderReference {
 class RGBPaletteShader extends FlxShader {
 	@:glFragmentHeader('
 		#pragma header
-		
+
 		uniform vec3 r;
 		uniform vec3 g;
 		uniform vec3 b;
@@ -151,9 +151,9 @@ class RGBPaletteShader extends FlxShader {
 			vec4 newColor = color;
 			newColor.rgb = min(color.r * r + color.g * g + color.b * b, vec3(1.0));
 			newColor.a = color.a;
-			
+
 			color = mix(color, newColor, mult);
-			
+
 			if(color.a > 0.0) {
 				return vec4(color.rgb, color.a);
 			}

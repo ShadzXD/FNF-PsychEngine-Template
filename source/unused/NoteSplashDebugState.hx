@@ -1,8 +1,8 @@
 package unused;
 
-import objects.Note;
-import objects.StrumNote;
-import objects.NoteSplash;
+import objects.notes.Note;
+import objects.notes.StrumNote;
+import objects.notes.NoteSplash;
 
 class NoteSplashDebugState extends MusicBeatState implements PsychUIEventHandler.PsychUIEvent {
 	var config:NoteSplashConfig;

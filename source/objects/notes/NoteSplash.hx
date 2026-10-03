@@ -1,4 +1,4 @@
-package objects;
+package objects.notes;
 
 import backend.animation.PsychAnimationController;
 import shaders.RGBPalette;
@@ -97,14 +97,11 @@ class NoteSplash extends FlxSprite {
 					rgb: config.rgb
 				}
 
-				if (config.animations != null) {
-					for (i in Reflect.fields(config.animations)) {
-						var anim:NoteSplashAnim = Reflect.field(config.animations, i);
-						if (anim == null) continue;
-						tempConfig.animations.set(i, anim);
-						if (anim.noteData % 4 == 0)
-							maxAnims++;
-					}
+				for (i in Reflect.fields(config.animations)) {
+					var anim:NoteSplashAnim = Reflect.field(config.animations, i);
+					tempConfig.animations.set(i, anim);
+					if (anim.noteData % 4 == 0)
+						maxAnims++;
 				}
 
 				this.config = tempConfig;
@@ -145,12 +142,6 @@ class NoteSplash extends FlxSprite {
 								offsets.push([x, y]);
 							}
 						}
-						// If every offset row was blank, fall back to default
-						// instead of leaving an empty array; the wrap math
-						// below would otherwise return offsets[0] == null and
-						// crash later in spawnSplashNote.
-						if (offsets.length == 0)
-							offsets = [[0, 0]];
 					}
 				}
 			}
@@ -298,11 +289,10 @@ class NoteSplash extends FlxSprite {
 			spawned = false;
 		}
 
-		alpha = ClientPrefs.data.splashAlpha;
+		alpha = ClientPrefs.data.noteSplashAlpha;
 		if (note != null)
 			alpha = note.noteSplashData.a;
 
-		antialiasing = ClientPrefs.data.antialiasing;
 		if (note != null)
 			antialiasing = note.noteSplashData.antialiasing;
 		if (PlayState.isPixelStage && config.allowPixel)
@@ -367,8 +357,6 @@ class NoteSplash extends FlxSprite {
 
 	public static function getSplashSkinPostfix() {
 		var skin:String = '';
-		if (ClientPrefs.data.splashSkin != ClientPrefs.defaultData.splashSkin)
-			skin = '-' + ClientPrefs.data.splashSkin.trim().toLowerCase().replace(' ', '-');
 		return skin;
 	}
 
@@ -490,28 +478,38 @@ class PixelSplashShader extends FlxShader {
 		uniform float mult;
 		uniform vec2 uBlocksize;
 
-		vec4 flixel_texture2DCustom(sampler2D bitmap, vec2 coord) {
+		vec4 applyColorTransform(vec4 color) {
+		    if (color.a == 0.) {
+		        return vec4(0.);
+		    }
+		    if (!hasTransform) {
+		        return color;
+		    }
+		    if (!hasColorTransform) {
+		        return color * openfl_Alphav;
+		    }
+
+		    color = vec4(color.rgb / color.a, color.a);
+		    color = clamp(openfl_ColorOffsetv + color * openfl_ColorMultiplierv, 0., 1.);
+
+		    if (color.a > 0.) {
+		        return vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);
+		    }
+		    return vec4(0.);
+		}
+
+		vec4 flixel_texture2DCustom(sampler2D bitmap, vec2 uv) {
 			vec2 blocks = openfl_TextureSize / uBlocksize;
-			vec4 color = flixel_texture2D(bitmap, floor(coord * blocks) / blocks);
-			if (!hasTransform) {
+			vec4 color = texture2D(bitmap, floor(uv * blocks) / blocks);
+			if (color.a == 0.0) {
 				return color;
 			}
 
-			if (color.a == 0.0 || mult == 0.0) {
-				return color * openfl_Alphav;
-			}
-
-			vec4 newColor = color;
-			newColor.rgb = min(color.r * r + color.g * g + color.b * b, vec3(1.0));
-			newColor.a = color.a;
-
-			color = mix(color, newColor, mult);
-
-			if (color.a > 0.0) {
-				return vec4(color.rgb, color.a);
-			}
-			return vec4(0.0, 0.0, 0.0, 0.0);
-		}')
+			vec3 rgbMix = mix(color.rgb, vec3(color.r * r + color.g * g + color.b * b), mult);
+			color.rgb = min(rgbMix, color.a);
+			return applyColorTransform(color);
+		}
+	')
 	@:glFragmentSource('
 		#pragma header
 

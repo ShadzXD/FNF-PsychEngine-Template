@@ -73,7 +73,6 @@ class DialogueBoxPsych extends FlxSpriteGroup {
 		spawnCharacters();
 
 		box = new FlxSprite(70, 370);
-		box.antialiasing = ClientPrefs.data.antialiasing;
 		box.frames = Paths.getSparrowAtlas('speech_bubble');
 		box.scrollFactor.set();
 		box.animation.addByPrefix('normal', 'speech bubble normal', 24);
@@ -118,7 +117,8 @@ class DialogueBoxPsych extends FlxSpriteGroup {
 				// previous code happily inserted null into the map and then
 				// crashed downstream when DialogueCharacter('null') tried to
 				// load assets/${null}.json.
-				if (charToAdd == null) continue;
+				if (charToAdd == null)
+					continue;
 				if (!charsMap.exists(charToAdd) || !charsMap.get(charToAdd)) {
 					charsMap.set(charToAdd, true);
 				}
@@ -335,12 +335,14 @@ class DialogueBoxPsych extends FlxSpriteGroup {
 		final total:Int = (dialogueList != null && dialogueList.dialogue != null) ? dialogueList.dialogue.length : 0;
 		while (currentText < total) {
 			curDialogue = dialogueList.dialogue[currentText];
-			if (curDialogue != null) break;
+			if (curDialogue != null)
+				break;
 			currentText++;
 		}
 		if (curDialogue == null) {
 			// No usable dialogue line found; bail out instead of hanging.
-			if (finishThing != null) finishThing();
+			if (finishThing != null)
+				finishThing();
 			kill();
 			return;
 		}

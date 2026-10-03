@@ -6,7 +6,7 @@ import flixel.addons.transition.FlxTransitionableState;
 import flixel.addons.display.FlxTiledSprite;
 import substates.GameOverSubstate;
 import states.stages.objects.*;
-import objects.Note;
+import objects.notes.Note;
 
 class PhillyBlazin extends BaseStage {
 	var rainShader:RainShader;
@@ -32,7 +32,6 @@ class PhillyBlazin extends BaseStage {
 		if (!ClientPrefs.data.lowQuality) {
 			var skyImage = Paths.image('phillyBlazin/skyBlur');
 			scrollingSky = new FlxTiledSprite(skyImage, Std.int(skyImage.width * 1.1) + 475, Std.int(skyImage.height / 1.1), true, false);
-			scrollingSky.antialiasing = ClientPrefs.data.antialiasing;
 			scrollingSky.setPosition(-500, -120);
 			scrollingSky.scrollFactor.set();
 			add(scrollingSky);
@@ -68,7 +67,7 @@ class PhillyBlazin extends BaseStage {
 			add(additionalLighten);
 		}
 
-		abot = new ABotSpeaker(gfGroup.x, gfGroup.y + 550);
+		abot = new ABotSpeaker(gfGroup.x, gfGroup.y + 580);
 		add(abot);
 
 		if (ClientPrefs.data.shaders)

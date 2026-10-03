@@ -1,8 +1,8 @@
 package states.editors;
 
-import objects.Note;
-import objects.NoteSplash;
-import objects.StrumNote;
+import objects.notes.Note;
+import objects.notes.NoteSplash;
+import objects.notes.StrumNote;
 import openfl.net.FileFilter;
 import flixel.group.FlxSpriteGroup.FlxTypedSpriteGroup;
 import flixel.input.keyboard.FlxKey;
@@ -11,7 +11,7 @@ import openfl.events.IOErrorEvent;
 import openfl.net.FileReference;
 import haxe.Json;
 
-@:access(objects.NoteSplash)
+@:access(objects.notes.NoteSplash)
 class NoteSplashEditorState extends MusicBeatState {
 	var strums:FlxTypedSpriteGroup<StrumNote> = new FlxTypedSpriteGroup();
 	var splashes:FlxTypedSpriteGroup<NoteSplash> = new FlxTypedSpriteGroup();

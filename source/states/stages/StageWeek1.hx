@@ -34,7 +34,7 @@ class StageWeek1 extends BaseStage {
 		}
 	}
 
-	override function eventPushed(event:objects.Note.EventNote) {
+	override function eventPushed(event:objects.notes.Note.EventNote) {
 		switch (event.event) {
 			case "Dadbattle Spotlight":
 				dadbattleBlack = new BGSprite(null, -800, -400, 0, 0);
